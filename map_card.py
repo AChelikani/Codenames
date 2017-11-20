@@ -44,6 +44,9 @@ class MapCard(object):
     def get_bomb_location(self):
         pass
 
+    def get_card_type_at_position(self, position):
+        return self.map[position]
+
     def get_num_card_by_type(self, card_type):
         return self.map.count(card_type)
 
