@@ -55,7 +55,7 @@ class CodenameGame(object):
             return True
         else:
             # Incorrect guess ends the turn
-            card.set_status(position_type):
+            card.set_status(position_type)
             self.current_clue["Number"] = 0
             return False
 
