@@ -15,6 +15,11 @@ Install all the requirements with `pip install -r requirements.txt`.
 Make sure to freeze any extra requirements you add in `requirements.txt`.
 
 
+## Execution
+Run `python app.py` to start the Flask server on port 5000.
+
+Visit `http://localhost:5000` to view route listings
+
 ### Todos
 - [ ] Finish basic game classes and logic
 - [ ] Create Flask API boilerplate for serving game and updating game state
