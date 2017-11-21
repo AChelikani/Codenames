@@ -22,9 +22,11 @@ def game(game_code):
     # TODO: Add checking around max capacity of room, other things
     if game_code in active_games:
         # Return page showing current state of game
+        print active_games[game_code]
         return game_code + ' game is already active'
     else:
         active_games[game_code] = CodenameGame()
+        print active_games[game_code]
         return game_code + ' game created'
 
 

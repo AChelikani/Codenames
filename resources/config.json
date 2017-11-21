@@ -1,0 +1,7 @@
+{
+	"NUM_CARDS": 25,
+	"NUM_BOMBS": 1,
+	"NUM_REDS": 8,
+	"NUM_BLUES": 8,
+	"WORDS_FILE": "resources/words.txt"
+}

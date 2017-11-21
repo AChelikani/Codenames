@@ -1,7 +1,8 @@
-import config
-import random
+from config import global_config as config
+from config import CardStatus
 from codename_card import *
 from map_card import *
+from word_source import WordsInMemory
 
 class CodenameGame(object):
     def __init__(self):
@@ -16,7 +17,7 @@ class CodenameGame(object):
     # Generate a new deck of cards, chosing a set of cards randomly from the set
     # of all cards.
     def _gen_cards(self):
-        words = random.sample(config.WORDS, config.NUM_CARDS)
+        words = WordsInMemory.sampleWords(config.getNumCards())
         cards = []
         position = 0
         for word in words:
@@ -24,8 +25,9 @@ class CodenameGame(object):
             position += 1
         return cards
 
-    def mark_card(self, card, new_status):
-        card.set_status(new_status)
+    def mark_card(self, ind, new_status):
+        assert(0 <= ind < len(deck))
+        self.deck[ind].set_status(new_status)
 
     def get_card_by_word(self, word):
         for card in self.deck:
@@ -60,7 +62,7 @@ class CodenameGame(object):
             return False
 
     def switch_turns(self, word, number):
-        self.current_turn = config.RED if self.current_turn == config.BLUE else config.BLUE
+        self.current_turn = CardStatus.RED if self.current_turn == CardStatus.BLUE else CardStatus.BLUE
         self.set_current_clue(word, number)
 
     def is_game_over(self):
@@ -68,17 +70,16 @@ class CodenameGame(object):
 
         # Check if bomb has been uncovered
         bomb_location = self.map_card.get_bomb_location()
-        if (self.deck[bomb_location].get_status() == config.BOMB):
+        if (self.deck[bomb_location].get_status() == CardStatus.BOMB):
             return True
 
         # Check if red or blue is at winning count
-        if (self.red_count == self.map_card.get_num_card_by_type(config.RED)):
+        if (self.red_count == self.map_card.get_num_card_by_type(CardStatus.RED)):
             return True
-        elif (self.blue_count == self.map_card.get_num_card_by_type(config.BLUE)):
+        elif (self.blue_count == self.map_card.get_num_card_by_type(CardStatus.BLUE)):
             return True
 
         return False
-
 
     def __repr__(self):
         output = str(self.map_card) + "\n"
@@ -88,14 +89,13 @@ class CodenameGame(object):
             output += "".join(map(spacer, self.deck[5*x:5*x+5]))
             output += "\n"
         output += "\n"
-        status_spacer = lambda x: str(x.status) + " "*(max_len - len(x.status))
+        status_spacer = lambda x: str(x.status.name) + " "*(max_len - len(x.status.name))
         for x in range(5):
             output += "".join(map(status_spacer, self.deck[5*x:5*x+5]))
             output += "\n"
         return output
 
-
 if __name__ == "__main__":
     cg = CodenameGame()
-    #cg.mark_card(cg.deck[0], config.RED)
+    #cg.mark_card(0, CardStatus.RED)
     print cg

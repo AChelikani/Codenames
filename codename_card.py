@@ -1,4 +1,4 @@
-import config
+from config import CardStatus
 
 class Card(object):
     def __init__(self, word, position):
@@ -7,13 +7,13 @@ class Card(object):
 
         # Status of card
         # EMPTY, RED, BLUE, NEUTRAL, BOMB
-        self.status = config.EMPTY
+        self.status = CardStatus.EMPTY
 
         # Position of card on the board
         self.position = position
 
     def set_status(self, status):
-        assert(status in config.CARD_STATUSES), "Invalid status"
+        assert(status in CardStatus), "Invalid status"
         self.status = status
 
     def get_status(self):
