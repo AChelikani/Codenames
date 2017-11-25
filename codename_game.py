@@ -98,4 +98,4 @@ class CodenameGame(object):
 if __name__ == "__main__":
     cg = CodenameGame()
     #cg.mark_card(0, CardStatus.RED)
-    print cg
+    print(cg)

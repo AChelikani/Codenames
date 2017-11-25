@@ -1,0 +1,15 @@
+<nav>
+  <a href="{{ url_for('home') }}" class="brand">
+    <span>Codenames/{{ game_code }}</span>
+  </a>
+
+  <!-- responsive-->
+  <input id="bmenub" type="checkbox" class="show">
+  <label for="bmenub" class="burger pseudo button">menu</label>
+
+  <div class="menu">
+    <a href="{{ url_for('join_game') }}" class="pseudo button icon-picture">Join</a>
+    <a href="{{ url_for('create_game') }}" class="pseudo button icon-picture">Create</a>
+    <a href="#" class="pseudo button icon-picture">How to Play</a>
+  </div>
+</nav>

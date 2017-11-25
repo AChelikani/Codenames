@@ -1,8 +1,11 @@
 click==6.7
+eventlet==0.21.0
 Flask==0.12.2
+Flask-SocketIO==2.9.2
 itsdangerous==0.24
 Jinja2==2.10
 MarkupSafe==1.0
-Werkzeug==0.12.2
 nltk==3.2.5
-enum34==1.1.6
+python-socketio==1.8.3
+six==1.11.0
+Werkzeug==0.12.2

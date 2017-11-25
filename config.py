@@ -15,16 +15,16 @@ class Configuration:
         self.NUM_BOMBS = dict.get("NUM_BOMBS", DefaultConfiguration.NUM_BOMBS)
         self.NUM_REDS = dict.get("NUM_REDS", DefaultConfiguration.NUM_REDS)
         self.NUM_BLUES = dict.get("NUM_BLUES", DefaultConfiguration.NUM_BLUES)
+        self.GAME_CODE_LEN = dict.get("GAME_CODE_LEN", DefaultConfiguration.GAME_CODE_LEN)
         self.WORDS_FILE = dict.get("WORDS_FILE", DefaultConfiguration.WORDS_FILE)
 
-
-    @classmethod    
+    @classmethod
     def fileConfiguration(cls):
         return cls(CodeConfiguration.parseConfigDict())
 
     @classmethod
     def CodeConfiguration(cls):
-        return cls(FileConfiguration.parseConfigDict())    
+        return cls(FileConfiguration.parseConfigDict())
 
     @staticmethod
     def factory(type):
@@ -33,7 +33,7 @@ class Configuration:
         elif type == "file":
             return Configuration.fileConfiguration()
         else:
-            raise ValueError("Unknown configuration type specified")    
+            raise ValueError("Unknown configuration type specified")
 
     def getNumCards(self):
         return self.NUM_CARDS
@@ -45,10 +45,13 @@ class Configuration:
         return self.NUM_REDS
 
     def getNumBlues(self):
-        return self.NUM_BLUES            
+        return self.NUM_BLUES
 
     def getNumNeutrals(self):
         return self.NUM_CARDS - self.NUM_BOMBS - self.NUM_REDS - self.NUM_BLUES
+
+    def getGameCodeLen(self):
+        return self.GAME_CODE_LEN
 
 class CodeConfiguration:
 
@@ -84,5 +87,6 @@ class DefaultConfiguration:
     NUM_REDS = 8
     NUM_BLUES = 8
     WORDS_FILE = "resources/words.txt"
+    GAME_CODE_LEN = 5
 
 global_config = Configuration.factory("file")

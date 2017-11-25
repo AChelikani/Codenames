@@ -27,11 +27,8 @@ class MapCard(object):
         for blue in range(config.getNumBlues()):
             mapping.append(CardStatus.BLUE)
 
-        for neutral in xrange(config.getNumNeutrals()):
+        for neutral in range(config.getNumNeutrals()):
             mapping.append(CardStatus.NEUTRAL)
-
-        # Add one extra for starting color
-        mapping.append(self.starting_color)
 
         # Randomize ordering
         random.shuffle(mapping)

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+  <h1>Active Games</h1>
+  {% if active_games|length == 0 %}
+    <center>
+      <p>No games found!</p>
+    </center>
+  {% endif %}
+  <ul>
+    {% for game_id in active_games  %}
+    <li>
+      <a href="{{ url_for('game_data', game_code=game_id) }}">
+        {{ game_id}}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

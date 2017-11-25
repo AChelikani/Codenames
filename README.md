@@ -18,6 +18,8 @@ Make sure to freeze any extra requirements you add in `requirements.txt`.
 ## Execution
 Run `python app.py` to start the Flask server on port 5000.
 
+To enable debugging and hot-reloading run `FLASK_DEBUG=1 python app.py`.
+
 Visit `http://localhost:5000` to view route listings
 
 ### Todos
