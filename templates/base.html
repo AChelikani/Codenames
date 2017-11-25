@@ -10,6 +10,10 @@
       body {
         overflow: hidden;
       }
+      .avatar {
+        width: 3.5em;
+        height: 3.5em;
+      }
       .container {
         margin-top: 4em;
         display: flex;
@@ -40,6 +44,7 @@
     <script src="{{ url_for('static', filename='js/test.js') }}"></script>
     {# <script src="https://unpkg.com/vue"></script> #}
     <script src="{{ url_for('static', filename='js/vue.dev.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 
     {% block scripts %}
     {% endblock %}

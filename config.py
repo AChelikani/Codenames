@@ -17,6 +17,7 @@ class Configuration:
         self.NUM_BLUES = dict.get("NUM_BLUES", DefaultConfiguration.NUM_BLUES)
         self.GAME_CODE_LEN = dict.get("GAME_CODE_LEN", DefaultConfiguration.GAME_CODE_LEN)
         self.WORDS_FILE = dict.get("WORDS_FILE", DefaultConfiguration.WORDS_FILE)
+        self.AVATARS = dict.get("AVATARS", DefaultConfiguration.AVATARS)
 
     @classmethod
     def fileConfiguration(cls):
@@ -53,6 +54,9 @@ class Configuration:
     def getGameCodeLen(self):
         return self.GAME_CODE_LEN
 
+    def getAvatars(self):
+        return self.AVATARS
+
 class CodeConfiguration:
 
     @staticmethod
@@ -88,5 +92,9 @@ class DefaultConfiguration:
     NUM_BLUES = 8
     WORDS_FILE = "resources/words.txt"
     GAME_CODE_LEN = 5
-
+    AVATARS_FILE = "resources/avatars.txt"
+    AVATARS = []
+    with open(AVATARS_FILE, 'r') as f:
+        for line in f:
+            AVATARS.append(line.strip())
 global_config = Configuration.factory("file")

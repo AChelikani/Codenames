@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block content %}
+{% raw %}
+<div id="lobby">
+  <h1>Lobby</h1>
+  <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
+  <h2>Players</h2>
+  <table class="primary">
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Role</th>
+    </thead>
+    <tbody>
+      <tr v-for="player in players">
+        <td>
+          <img class="avatar" :src="avatarUri + player.avatar + '.png'">
+          </img>
+        </td>
+        <td><select></select></td>
+      </tr>
+    </tbody>
+  </table>
+  <button>Start Game</button>
+</div>
+{% endraw %}
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript" charset="utf-8">
+  var avatarUri = {{ url_for('static', filename='img/avatar/')|tojson }};
+  var gameCode = {{ game_code|tojson }};
+  var players = [];
+
+  // TODO: https in prod
+  var server_uri = 'http://' + document.domain + ':' + location.port;
+  // Connect to the server
+  var socket = io.connect(server_uri);
+
+  // Handles the initial connection of the player
+  socket.on('connect', function() {
+    socket.emit('player connect', {
+      game_code: gameCode
+    });
+  });
+
+  // Handles initialization of lobby data
+  socket.on('update', function(data) {
+    // clear the players list
+    players.splice(0, players.length);
+    // add in the new state
+    data.players.forEach(function(player) {
+      players.push(player);
+    });
+  });
+
+  // Handles connection of new players to the lobby
+  socket.on('player connect', function(data) {
+    players.push(data.player);
+  });
+
+  // Handles disconnection of players from the lobby
+  socket.on('player disconnect', function(data) {
+    var dcPlayer = data.player;
+    var index = -1;
+    players.forEach(function(player, i) {
+      if (player.id === dcPlayer.id) {
+        index = i;
+      }
+    });
+    if (index > -1) {
+      players.splice(index, 1);
+    }
+  });
+
+  var Lobby = new Vue({
+    el: '#lobby',
+    data: {
+      avatarUri: avatarUri,
+      gameCode: gameCode,
+      players: players
+    }
+  });
+</script>
+{% endblock %}
