@@ -47,6 +47,10 @@ class MapCard(object):
     def get_num_card_by_type(self, card_type):
         return self.map.count(card_type)
 
+    # Serialize the map card into JSON
+    def serialize(self):
+        pass
+
     def __repr__(self):
         output = ""
         max_len = 15

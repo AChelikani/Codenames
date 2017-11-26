@@ -81,6 +81,14 @@ class CodenameGame(object):
 
         return False
 
+    # Stores the current game state into a JSON
+    def serialize(self):
+        card_statuses = []
+        for card in self.deck:
+            card_statuses.append(card.get_status())
+        game_state = {"Cards" : self.deck, "Statuses" : card_statuses}
+        return game_state
+
     def __repr__(self):
         output = str(self.map_card) + "\n"
         max_len = 15
