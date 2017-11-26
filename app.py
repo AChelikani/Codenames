@@ -126,6 +126,49 @@ def player_leave_lobby():
         'player': player.serialize()
     }, broadcast=True, room=game_code)
 
+# TODO: this will change with arvind's changes
+@socketio.on('player switch team')
+def player_switch_team():
+    sid = request.sid
+    if sid not in players_games:
+        return
+
+    game_code = players_games[sid]
+
+    if game_code not in active_games:
+        return
+
+    game_manager = active_games[game_code]
+
+    game_manager.switch_player_team(sid)
+
+    players = [p.serialize() for p in game_manager.get_players().values()]
+    emit('update', {
+        'players': players
+    }, broadcast=True)
+
+# TODO: this will change with arvind's changes
+@socketio.on('player switch role')
+def player_switch_role():
+    sid = request.sid
+    if sid not in players_games:
+        return
+
+    game_code = players_games[sid]
+
+    if game_code not in active_games:
+        return
+
+    game_manager = active_games[game_code]
+
+    game_manager.switch_player_role(sid)
+
+    players = [p.serialize() for p in game_manager.get_players().values()]
+    emit('update', {
+        'players': players
+    }, broadcast=True)
+
+
 @socketio.on('start game')
 def player_start_game(message):
 	raise NotImplementedError("Please Implement this method")

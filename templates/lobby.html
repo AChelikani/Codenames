@@ -1,31 +1,97 @@
 {% extends 'base.html' %}
+{% block head %}
+<style type="text/css">
+.th-blue {
+  background-color: #0074d9;
+}
+.th-red {
+  background-color: #ff4136;
+}
+td {
+  padding-right: 1em;
+}
+td img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+{% endblock %}
 {% block content %}
 {% raw %}
 <div id="lobby">
-  <h1>Lobby</h1>
+  <center>
+  <h2>Lobby</h2>
   <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
-  <h2>Players</h2>
-  <table class="primary">
-    <thead>
-      <tr>
-        <th>Player</th>
-        <th>Role</th>
-    </thead>
-    <tbody>
-      <tr v-for="player in players">
-        <td>
-          <img class="avatar" :src="avatarUri + player.avatar + '.png'">
-          </img>
-        </td>
-        <td><select></select></td>
-      </tr>
-    </tbody>
-  </table>
-  <button>Start Game</button>
+  <h3>Teams</h3>
+  <div class="flex one two-800">
+    <div>
+      <team
+        :socket="socket"
+        :players="bluePlayers"
+        color="BLUE"
+        :avataruri="avatarUri"
+      ></team>
+    </div>
+    <div>
+      <team
+        :socket="socket"
+        :players="redPlayers"
+        color="RED"
+        :avataruri="avatarUri"
+      ></team>
+    </div>
+  </div>
+    <button v-on:click="switchTeams">Switch teams</button>
+    <button>Start Game</button>
+  </center>
 </div>
 {% endraw %}
 {% endblock %}
 {% block scripts %}
+{% raw %}
+<script type="text/x-template" id="team-template">
+  <table class="primary">
+    <thead>
+      <tr>
+        <th v-bind:class="{
+          'th-blue': color === 'BLUE',
+          'th-red': color === 'RED',
+        }">Player</th>
+        <th v-bind:class="{
+          'th-blue': color === 'BLUE',
+          'th-red': color === 'RED',
+        }">Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Empty item to maintain the table width if there are no items -->
+      <tr v-if="players.length === 0">
+        <td></td>
+        <td>
+          <select style="width: 150px; visibility: hidden;"></select>
+        </td>
+      </tr>
+      <tr v-for="player in players">
+        <td>
+          <img class="avatar" :src="avataruri + player.avatar + '.png'">
+          </img>
+        </td>
+        <td>
+          <select v-if="player.id === socket.id" class="table-content" style="width: 150px" v-on:change="onChange" v-bind:value="player.role">
+            <option>SPYMASTER</option>
+            <option>PLAYER</option>
+          </select>
+          <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
+            <option>SPYMASTER</option>
+            <option>PLAYER</option>
+          </select>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</script>
+{% endraw %}
 <script type="text/javascript" charset="utf-8">
   var avatarUri = {{ url_for('static', filename='img/avatar/')|tojson }};
   var gameCode = {{ game_code|tojson }};
@@ -72,12 +138,45 @@
     }
   });
 
+  Vue.component('team', {
+    template: '#team-template',
+    props: {
+      players: Array,
+      color: String,
+      socket: Object,
+      avataruri: String,
+    },
+    methods: {
+      onChange: function(value) {
+        socket.emit('player switch role');
+      }
+    }
+  });
+
   var Lobby = new Vue({
     el: '#lobby',
     data: {
+      socket: socket,
       avatarUri: avatarUri,
       gameCode: gameCode,
-      players: players
+      players: players,
+    },
+    computed: {
+      bluePlayers: function() {
+        return this.players.filter(function(player) {
+          return player.team === 'BLUE';
+        });
+      },
+      redPlayers: function() {
+        return this.players.filter(function(player) {
+          return player.team === 'RED'
+        });
+      }
+    },
+    methods: {
+      switchTeams: function(event) {
+        socket.emit('player switch team');
+      }
     }
   });
 </script>

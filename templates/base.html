@@ -1,30 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    {% block head %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ url_for('static', filename='css/picnic.min.css') }}" rel="stylesheet">
+    {% block head %}
     {% endblock %}
     <title>Codenames</title>
     <style type="text/css">
-      body {
-        overflow: hidden;
-      }
       .avatar {
-        width: 3.5em;
-        height: 3.5em;
+        width: 3.0em;
+        height: 3.0em;
       }
       .container {
-        margin-top: 4em;
+        padding-top: 4em;
         display: flex;
         justify-content: center; /* for horizontal alignment */
         align-items: center; /* for vertical alignment */
       }
       .red {
-        color: red;
+        color: #ff4136;
       }
       .blue {
-        color: blue;
+        color: #0074d9;
       }
       .neutral {
         color: lightgray;
@@ -32,6 +29,10 @@
       .bomb {
         color: black;
         font-weight: bold;
+      }
+      select[disabled] {
+        color: gray;
+        background-color: #bbb;
       }
     </style>
   </head>
@@ -45,6 +46,7 @@
     {# <script src="https://unpkg.com/vue"></script> #}
     <script src="{{ url_for('static', filename='js/vue.dev.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/js.cookie.min.js') }}"></script>
 
     {% block scripts %}
     {% endblock %}

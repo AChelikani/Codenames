@@ -11,19 +11,31 @@
 {% block scripts %}
 {% raw %}
 <script type="text/x-template" id="board-template">
-  <table>
-    <thead></thead>
+  <table class="primary">
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Role</th>
+        <th v-if="teamColor==='RED'" style="background-color: #ff4136">
+          Player
+        </th>
+        <th v-if="teamColor==='RED'" style="background-color: #ff4136">
+          Role
+        </th>
+    </thead>
     <tbody>
-      <tr v-for="row in boardData">
-        <td v-for="col in row">
-          <span v-bind:class="{
-            red: col.status === 'RED',
-            blue: col.status === 'BLUE',
-            neutral: col.status === 'NEUTRAL',
-            bomb: col.status === 'BOMB'
-          }">
-            {{col.word}}
-          </span>
+      <tr v-for="player in players">
+        <td>
+          <img class="avatar" :src="avatarUri + player.avatar + '.png'">
+          </img>
+        </td>
+        <td>
+          <select style="width: 200px" :disabled="player.id !== socket.id">
+            <option v-if="player.id === socket.id">Select your role</option>
+            <option v-if="player.id !== socket.id">Selecting a role</option>
+            <option>Spymaster</option>
+            <option>Operative</option>
+          </select>
         </td>
       </tr>
     </tbody>
