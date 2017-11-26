@@ -3,10 +3,13 @@
 <div>
   <center>
     <h1>Join a Game</h1>
-    <label>
-      <input type="email" placeholder="Game code">
-    </label>
-    <button>Join</button>
+    <form action="/add_to_lobby/" method="post">
+        <input name="game_code" type="text" placeholder="Game code">
+        <button type="submit">Join</button>
+    </form>
+    {% if error_text %}
+    <h3> {{ error_text }} </h3>
+    {% endif %}
   </center>
 </div>
 {% endblock %}

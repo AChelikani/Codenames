@@ -19,21 +19,15 @@ def home():
     # Get all active games only for debugging for now
     return render_template('home.html', active_games=list(active_games.keys()))
 
-# Unique route for game page
-@app.route('/<game_code>')
-def game(game_code):
-    # TODO: Add checking around max capacity of room, other things
-    if game_code in active_games:
-        # Return page showing current state of game
-        print(active_games[game_code])
-        return game_code + ' game is already active'
-    else:
-        active_games[game_code] = GameManager(game_code)
-        print(active_games[game_code])
-        return game_code + ' game created'
+@app.route('/how_to_play')
+def how_to_play():
+    return render_template('how_to_play.html')
 
 @app.route('/create')
 def create_game():
+    # TODO: Note that going on the create page and refreshing results in many games being
+    # added to the active games dict, which is not desired. Unclear on a resolution
+    # for this issue yet.
     code_len = config.getGameCodeLen()
     existing_codes = active_games.keys()
     new_code = generate_unique_game_code(code_len, existing_codes)
@@ -42,7 +36,7 @@ def create_game():
 
 @app.route('/join')
 def join_game():
-    return render_template('join.html')
+    return render_template('join.html', error_text="")
 
 # Unique route serving game data
 @app.route('/g/<game_code>')
@@ -78,11 +72,15 @@ def game_lobby(game_code):
     else:
         abort(404)
 
-
+@app.route('/add_to_lobby/', methods=['POST'])
+def add_to_lobby():
+    game_code = request.form["game_code"]
+    if game_code in active_games:
+        return render_template('lobby.html', game_code=game_code)
+    else:
+        return render_template('join.html', error_text="Invalid game code")
 
 # Socket listeners for lobby actions
-
-
 # Handles the initial connection of a player to a lobby
 @socketio.on('player connect')
 def player_join_lobby(message):
