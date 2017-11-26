@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, abort, jsonify
+from flask import Flask, render_template, request, abort, jsonify, send_from_directory
 from config import global_config as config
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from game_manager import GameManager
 from game_code import generate_unique_game_code
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -144,6 +145,10 @@ def player_end_game(message):
 def player_turn(message):
 	raise NotImplementedError("Please Implement this method")
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static','img','icons'),
+                               'question_mark_icon.ico')
 
 if __name__ == "__main__":
     socketio.run(app)

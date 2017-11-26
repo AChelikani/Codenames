@@ -21,17 +21,11 @@ class Configuration:
 
     @classmethod
     def fileConfiguration(cls):
-        return cls(CodeConfiguration.parseConfigDict())
-
-    @classmethod
-    def CodeConfiguration(cls):
         return cls(FileConfiguration.parseConfigDict())
 
     @staticmethod
     def factory(type):
-        if type == "code":
-            return Configuration.codeConfiguration()
-        elif type == "file":
+        if type == "file":
             return Configuration.fileConfiguration()
         else:
             raise ValueError("Unknown configuration type specified")
@@ -57,19 +51,6 @@ class Configuration:
     def getAvatars(self):
         return self.AVATARS
 
-class CodeConfiguration:
-
-    @staticmethod
-    def parseConfigDict():
-        dict = {}
-        # SPECIFY DESIRED CONSTANTS
-        dict["NUM_CARDS"] = 25
-        dict["NUM_BOMBS"] = 1
-        dict["NUM_REDS"] = 8
-        dict["NUM_BLUES"] = 8
-        dict["NUM_NEUTRALS"] = 7
-        return dict
-
 class FileConfiguration:
 
     @staticmethod
@@ -94,7 +75,4 @@ class DefaultConfiguration:
     GAME_CODE_LEN = 5
     AVATARS_FILE = "resources/avatars.txt"
     AVATARS = []
-    with open(AVATARS_FILE, 'r') as f:
-        for line in f:
-            AVATARS.append(line.strip())
 global_config = Configuration.factory("file")

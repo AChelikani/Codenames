@@ -20,17 +20,7 @@ class WordsFile:
 				words.append(line.strip().lower())
 		return words
 
-class WordsFileStream:
-	def __init__(self, filename):
-		self.filename = filename
-
-	def processWords(self, processor):
-		result = None
-		with open(self.filename, 'r') as f:
-			result = processor(f)
-		return result
-
-class WordsInMemory(WordsSource):
+class WordsFromFile(WordsSource):
 
 	def __init__(self):
 		self._words = None
@@ -47,17 +37,6 @@ class WordsInMemory(WordsSource):
 	def sampleWords(self,n):
 		words = self.getAllWords()
 		return random.sample(words, n)
-
-class WordsFromStream(WordsSource):
-
-	def __init__(self):
-		self._words = None
-		self._wordsStream = WordsFileStream(config.WORDS_FILE)
-
-	def sampleWords(self, n):
-		def processor(f):
-			return reservoirSample(f, n)
-		return self._wordsStream.processWords(processor)
 	
 class NounsFromNLTK(WordsSource):
 
@@ -93,7 +72,7 @@ class NounsFromNLTK(WordsSource):
 		return random.sample(words, n)
 
 # For global access
-WordsInMemory = WordsInMemory()
+WordsInMemory = WordsFromFile()
 
 # Take input list of words from file
 # Use concept.io to build graph (in-memory)
