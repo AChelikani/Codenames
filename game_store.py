@@ -8,6 +8,7 @@ class ActiveGameStore:
 
 	def __init__(self):
 		self.active_games = {} # Dict[GameCode, GameManager]
+		# TODO: with session this might be deprecated
 		self.player_games = {} # Dict[str(PlayerId), GameCode]
 
 	def create_game(self, game_code_option = None):
@@ -29,13 +30,16 @@ class ActiveGameStore:
 		self.active_games[game_code] = new_game
 
 	def remove_player(self, player_id, game_code):
-		player = self.active_games[game_code].remove_player(player_id)
+		game_manager = self.get_game(game_code)
+		player = game_manager.remove_player(player_id)
 		del self.player_games[player_id]
 		return player
 
-	def add_player(self, player_id, game_code):
-		new_player = self.active_games[game_code].add_player(player_id)
-		self.player_games[player_id] = game_code
+	def add_player(self, game_code):
+		if game_code not in self.active_games:
+			raise ValueError("%s not found in game store" % str(game_code))
+		new_player = self.active_games[game_code].add_new_player()
+		self.player_games[new_player.id] = game_code
 		return new_player
 
 	def get_game(self, game_code):
@@ -61,3 +65,24 @@ class ActiveGameStore:
 
 	def get_all_active_games(self):
 		return [game_code.serialize() for game_code in self.active_games.keys()]
+
+	def does_player_exist(self, game_code, player_id):
+		game_manager = self.get_game(game_code)
+		return player_id in game_manager.get_players()
+
+	def is_player_dangling(self, game_code, player_id):
+		game_manager = self.get_game(game_code)
+		return player_id in game_manager.get_dangling_players()
+
+	def restore_player(self, game_code, player_id):
+		game_manager = self.get_game(game_code)
+		assert(player_id in game_manager.get_dangling_players())
+		self.player_games[player_id] = game_code
+		return game_manager.restore_player(player_id)
+
+	def get_lobby_bundle(self, game_code):
+		game_manager = self.get_game(game_code)
+		players = [p.serialize() for p in game_manager.get_players().values()]
+		return {
+			'players': players
+		}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, jsonify, send_from_directory
+from flask import Flask, render_template, request, abort, send_from_directory, session
 from config import global_config as config
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from game_manager import GameManager
@@ -8,7 +8,7 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+socketio = SocketIO(app, manage_session=True)
 
 # Active games store
 game_store = ActiveGameStore()
@@ -60,6 +60,7 @@ def game_data(game_code):
 @app.route('/l/<game_code>')
 def game_lobby(game_code):
     game_code_obj = GameCode(game_code)
+    session['game_code'] = game_code
     if game_store.contains_game(game_code_obj):
         return render_template('lobby.html', game_code=game_code_obj.serialize())
     else:
@@ -74,95 +75,98 @@ def add_to_lobby():
     else:
         return render_template('join.html', error_text="Invalid game code")
 
+def get_game_data_from_session(session):
+    if 'game_code' not in session:
+        err_msg = 'Game session not found! Maybe it has ended or been deleted!'
+        raise ValueError(err_msg)
+    if 'player_id' not in session:
+        err_msg = """It looks like your session ended unexpectedly, please
+                     refresh the page."""
+        raise ValueError(err_msg)
+
+    game_code = session['game_code']
+    player_id = session['player_id']
+    return game_code, player_id
+
 # Socket listeners for lobby actions
 # Handles the initial connection of a player to a lobby
 @socketio.on('player connect')
-def player_join_lobby(message):
-    # TODO: sid should be replaced with some kind of cookie
-    sid = request.sid
-    game_code_raw = message['game_code']
+def player_join_lobby(data):
+    if 'game_code' not in session:
+        # TODO: error handling
+        return
+    game_code_raw = session['game_code']
     game_code = GameCode(game_code_raw)
 
     if not game_store.contains_game(game_code):
         # TODO error handling
         return
 
-    game_manager = game_store.get_game(game_code)
+    existing_id = None
+    if ('oldId' in data and
+        game_store.is_player_dangling(game_code, data['oldId'])):
+        existing_id = data['oldId']
+        player = game_store.restore_player(game_code, existing_id)
+    else:
+        player = game_store.add_player(game_code)
 
-    # Send the new player the current lobby state
-    players = [p.serialize() for p in game_manager.get_players().values()]
-    emit('update', {
-        'players': players
-    }, room=game_code)
+    # Store the player id and game code in the session for further requests
+    session['player_id'] = player.id
 
-    # Add the user to the game and to the socket room
-    player = game_store.add_player(sid, game_code)
+    # Add the player to the socket room
     join_room(game_code)
 
-    # Notify all players in the lobby of the new user
-    emit('player connect', {
-        'player': player.serialize()
-    }, broadcast=True, room=game_code)
+    emit('player id', player.id)
+    lobby_bundle = game_store.get_lobby_bundle(game_code)
+    emit('update', lobby_bundle, room=game_code, broadcast=True)
 
 @socketio.on('disconnect')
 def player_leave_lobby():
-    sid = request.sid
-
-    if not game_store.contains_player(sid):
-        return
-        
-    game_code = game_store.get_game_code(sid)
-
-    if not game_store.contains_game(sid):
+    game_code_raw, player_id = get_game_data_from_session(session)
+    game_code = GameCode(game_code_raw)
+    if not game_store.contains_game(game_code):
+        # TODO: error handling
         return
 
-    player = game_store.remove_player(sid, game_code)
+    player = game_store.remove_player(player_id, game_code)
     leave_room(game_code)
-    emit('player disconnect', {
-        'player': player.serialize()
-    }, broadcast=True, room=game_code)
+    lobby_bundle = game_store.get_lobby_bundle(game_code)
+    emit('update', lobby_bundle, room=game_code, broadcast=True)
+
 
 @socketio.on('player switch team')
 def player_switch_team():
-    sid = request.sid
-
-    if not game_store.contains_player(sid):
+    try:
+        game_code_raw, player_id = get_game_data_from_session(session)
+    except ValueError as err:
+        emit('error', str(err))
         return
-
-    game_code = game_store.get_game_code(sid)
-
+    game_code = GameCode(game_code_raw)
     if not game_store.contains_game(game_code):
+        # TODO: error handling
         return
 
     game_manager = game_store.get_game(game_code)
-
-    game_manager.switch_player_team(sid)
-
-    players = [p.serialize() for p in game_manager.get_players().values()]
-    emit('update', {
-        'players': players
-    }, broadcast=True, room=game_code)
+    game_manager.switch_player_team(player_id)
+    lobby_bundle = game_store.get_lobby_bundle(game_code)
+    emit('update', lobby_bundle, room=game_code, broadcast=True)
 
 @socketio.on('player switch role')
 def player_switch_role():
-    sid = request.sid
-
-    if not game_store.contains_player(sid):
+    try:
+        game_code_raw, player_id = get_game_data_from_session(session)
+    except ValueError as err:
+        emit('error', str(err))
         return
-
-    game_code = game_store.get_game_code(sid)
-
+    game_code = GameCode(game_code_raw)
     if not game_store.contains_game(game_code):
+        # TODO: error handling
         return
 
     game_manager = game_store.get_game(game_code)
-
-    game_manager.switch_player_role(sid)
-
-    players = [p.serialize() for p in game_manager.get_players().values()]
-    emit('update', {
-        'players': players
-    }, broadcast=True, room=game_code)
+    game_manager.switch_player_role(player_id)
+    lobby_bundle = game_store.get_lobby_bundle(game_code)
+    emit('update', lobby_bundle, room=game_code, broadcast=True)
 
 
 @socketio.on('start game')

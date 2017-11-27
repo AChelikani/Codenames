@@ -15,34 +15,54 @@ td img {
   margin-left: auto;
   margin-right: auto;
 }
+.error-text {
+  color: red;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+.list-enter-active, .list-leave-active {
+  transition: opacity .5s;
+}
+.list-enter, .list-leave-to {
+  opacity: 0;
+}
 </style>
 {% endblock %}
 {% block content %}
 {% raw %}
 <div id="lobby">
   <center>
-  <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
-  <h3>Teams</h3>
-  <div class="flex one two-800">
-    <div>
-      <team
-        :socket="socket"
-        :players="bluePlayers"
-        color="BLUE"
-        :avataruri="avatarUri"
-      ></team>
+    <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
+    <h3>Teams</h3>
+    <div class="flex one two-800">
+      <div>
+        <team
+          :playerid="playerId"
+          :players="bluePlayers"
+          color="BLUE"
+          :avataruri="avatarUri"
+        ></team>
+      </div>
+      <div>
+        <team
+          :playerid="playerId"
+          :players="redPlayers"
+          color="RED"
+          :avataruri="avatarUri"
+        ></team>
+      </div>
     </div>
-    <div>
-      <team
-        :socket="socket"
-        :players="redPlayers"
-        color="RED"
-        :avataruri="avatarUri"
-      ></team>
-    </div>
-  </div>
     <button class="success" v-on:click="switchTeams">Switch teams</button>
     <button class="warning">Start Game</button>
+    <transition-group name="list" tag="p">
+      <p v-for="error in errors" class="error-text" v-bind:key="error">
+        {{ "Error: " + error }}
+      </p>
+    </transition-group>
   </center>
 </div>
 {% endraw %}
@@ -65,84 +85,54 @@ td img {
     </thead>
     <tbody>
       <!-- Empty item to maintain the table width if there are no items -->
-      <tr v-if="players.length === 0">
-        <td></td>
-        <td>
-          <select style="width: 150px; visibility: hidden;"></select>
-        </td>
-      </tr>
-      <tr v-for="player in players">
-        <td>
-          <img class="avatar" :src="avataruri + player.avatar + '.png'">
-          </img>
-        </td>
-        <td>
-          <select v-if="player.id === socket.id" class="table-content" style="width: 150px" v-on:change="onChange" v-bind:value="player.role">
-            <option>SPYMASTER</option>
-            <option>PLAYER</option>
-          </select>
-          <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
-            <option>SPYMASTER</option>
-            <option>PLAYER</option>
-          </select>
-        </td>
-      </tr>
+      <template v-if="players.length === 0">
+        <tr>
+          <td></td>
+          <td>
+            <select style="width: 150px; visibility: hidden;"></select>
+          </td>
+        </tr>
+      </template>
+      <template v-else>
+        <tr v-for="player in players" v-bind:key="player.avatar">
+          <td>
+            <img class="avatar" :src="avataruri + player.avatar + '.png'">
+            </img>
+          </td>
+          <td>
+            <select v-if="player.id === playerid" class="table-content" style="width: 150px" v-on:change="onChange" v-bind:value="player.role">
+              <option>SPYMASTER</option>
+              <option>PLAYER</option>
+            </select>
+            <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
+              <option>SPYMASTER</option>
+              <option>PLAYER</option>
+            </select>
+          </td>
+        </tr>
+      </template>
     </tbody>
   </table>
 </script>
 {% endraw %}
 <script type="text/javascript" charset="utf-8">
+  var COOKIE_ID = 'CN_ID';
   var avatarUri = {{ url_for('static', filename='img/avatar/')|tojson }};
   var gameCode = {{ game_code|tojson }};
   var players = [];
+  var errors = [];
 
+  // Connect to the socket server
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
-  // Connect to the server
   var socket = io.connect(serverUri);
-
-  // Handles the initial connection of the player
-  socket.on('connect', function() {
-    socket.emit('player connect', {
-      game_code: gameCode
-    });
-  });
-
-  // Handles initialization of lobby data
-  socket.on('update', function(data) {
-    // clear the players list
-    players.splice(0, players.length);
-    // add in the new state
-    data.players.forEach(function(player) {
-      players.push(player);
-    });
-  });
-
-  // Handles connection of new players to the lobby
-  socket.on('player connect', function(data) {
-    players.push(data.player);
-  });
-
-  // Handles disconnection of players from the lobby
-  socket.on('player disconnect', function(data) {
-    var dcPlayer = data.player;
-    var index = -1;
-    players.forEach(function(player, i) {
-      if (player.id === dcPlayer.id) {
-        index = i;
-      }
-    });
-    if (index > -1) {
-      players.splice(index, 1);
-    }
-  });
 
   Vue.component('team', {
     template: '#team-template',
     props: {
       players: Array,
       color: String,
-      socket: Object,
-      avataruri: String,
+      playerid: String,
+      avataruri: String
     },
     methods: {
       onChange: function(value) {
@@ -154,10 +144,11 @@ td img {
   var Lobby = new Vue({
     el: '#lobby',
     data: {
-      socket: socket,
+      playerId: '',
       avatarUri: avatarUri,
       gameCode: gameCode,
       players: players,
+      errors: errors,
     },
     computed: {
       bluePlayers: function() {
@@ -177,5 +168,37 @@ td img {
       }
     }
   });
+
+  // Handles the initial connection of the player
+  socket.on('connect', function() {
+    var oldId = Cookies.get(COOKIE_ID);
+    socket.emit('player connect', {
+      'oldId': oldId
+    });
+  });
+
+  socket.on('player id', function(playerId) {
+    Lobby.playerId = playerId;
+    Cookies.set(COOKIE_ID, playerId);
+  });
+
+  // Handles initialization of lobby data
+  socket.on('update', function(data) {
+    // clear the players list
+    players.splice(0, players.length);
+
+    // add in the new state
+    data.players.forEach(function(player) {
+      players.push(player);
+    });
+  });
+
+  socket.on('error', function(error) {
+    errors.push(error);
+    setTimeout(function() {
+      errors.shift();
+    }, 10000);
+  });
+
 </script>
 {% endblock %}
