@@ -99,7 +99,7 @@ def player_join_lobby(message):
     players = [p.serialize() for p in game_manager.get_players().values()]
     emit('update', {
         'players': players
-    })
+    }, room=game_code)
 
     # Add the user to the game and to the socket room
     player = game_manager.add_player(sid)
@@ -145,7 +145,7 @@ def player_switch_team():
     players = [p.serialize() for p in game_manager.get_players().values()]
     emit('update', {
         'players': players
-    }, broadcast=True)
+    }, broadcast=True, room=game_code)
 
 # TODO: this will change with arvind's changes
 @socketio.on('player switch role')
@@ -166,7 +166,7 @@ def player_switch_role():
     players = [p.serialize() for p in game_manager.get_players().values()]
     emit('update', {
         'players': players
-    }, broadcast=True)
+    }, broadcast=True, room=game_code)
 
 
 @socketio.on('start game')

@@ -21,7 +21,6 @@ td img {
 {% raw %}
 <div id="lobby">
   <center>
-  <h2>Lobby</h2>
   <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
   <h3>Teams</h3>
   <div class="flex one two-800">
@@ -42,8 +41,8 @@ td img {
       ></team>
     </div>
   </div>
-    <button v-on:click="switchTeams">Switch teams</button>
-    <button>Start Game</button>
+    <button class="success" v-on:click="switchTeams">Switch teams</button>
+    <button class="warning">Start Game</button>
   </center>
 </div>
 {% endraw %}
@@ -97,10 +96,9 @@ td img {
   var gameCode = {{ game_code|tojson }};
   var players = [];
 
-  // TODO: https in prod
-  var server_uri = 'http://' + document.domain + ':' + location.port;
+  var serverUri = location.protocol+'//'+document.domain+':'+location.port;
   // Connect to the server
-  var socket = io.connect(server_uri);
+  var socket = io.connect(serverUri);
 
   // Handles the initial connection of the player
   socket.on('connect', function() {
