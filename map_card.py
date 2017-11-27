@@ -49,7 +49,11 @@ class MapCard(object):
 
     # Serialize the map card into JSON
     def serialize(self):
-        pass
+        return {
+            "starting_color": self.starting_color.name,
+            "map": [str(status.name) for status in self.map],
+            "bomb_location": self.bomb_location
+        }
 
     def __repr__(self):
         output = ""

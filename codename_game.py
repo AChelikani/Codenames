@@ -3,6 +3,7 @@ from config import CardStatus
 from codename_card import *
 from map_card import *
 from word_source import WordsInMemory
+from copy import deepcopy
 
 class CodenameGame(object):
     def __init__(self):
@@ -12,7 +13,9 @@ class CodenameGame(object):
         self.red_count = 0
         self.blue_count = 0
         self.current_turn = self.map_card.get_starting_color()
-        self.current_clue = {"Word" : None, "Number" : None}
+        self.current_clue = None
+        self.activity_log = ActivityLog()
+        self.log_entry_builder = LogEntryBuilder()
 
     # Generate a new deck of cards, chosing a set of cards randomly from the set
     # of all cards.
@@ -38,12 +41,14 @@ class CodenameGame(object):
     def set_current_clue(self, word, number):
         assert(int(number) == number), "Not a valid number"
 
-        self.current_clue["Word"] = word
-        self.current_clue["Number"] = number
+        self.current_clue = Clue(word, number)
 
     # Makes a guess, and returns boolean based on correctness of guess
     def make_guess(self, word):
-        if (self.current_clue["Number"] == 0):
+        if (self.current_clue is None):
+            raise Exception("No clue given")
+
+        if (self.current_clue.number == 0):
             raise Exception("No more guesses left!")
 
         card = self.get_card_by_word(word)
@@ -51,17 +56,19 @@ class CodenameGame(object):
             raise Exception("Invalid word")
 
         position_type = self.map_card.get_card_type_at_position(card.get_position())
+        self.log_entry_builder.track_guess(Card(word, position_type))
         if (self.current_turn == position_type):
             card.set_status(position_type)
-            self.current_clue["Number"] -= 1
+            self.current_clue.number -= 1
             return True
         else:
             # Incorrect guess ends the turn
             card.set_status(position_type)
-            self.current_clue["Number"] = 0
+            self.current_clue.number = 0
             return False
 
     def switch_turns(self, word, number):
+        self.activity_log.addEntry(self.log_entry_builder.build(self.side, self.clue))
         self.current_turn = CardStatus.RED if self.current_turn == CardStatus.BLUE else CardStatus.BLUE
         self.set_current_clue(word, number)
 
@@ -86,8 +93,15 @@ class CodenameGame(object):
         card_statuses = []
         for card in self.deck:
             card_statuses.append(card.get_status())
-        game_state = {"Cards" : self.deck, "Statuses" : card_statuses}
-        return game_state
+        serialized_deck = [card.serialize() for card in deck]
+        return {
+            "deck" : serialized_deck,
+            "redCount": self.red_count,
+            "blueCount": self.blue_count,
+            "currentClue": Clue.serialize_clue(self.current_clue),
+            "currentTurn": self.current_turn.name,
+            "activityLog": self.activity_log.serialize()
+        }
 
     def __repr__(self):
         output = str(self.map_card) + "\n"
@@ -102,6 +116,90 @@ class CodenameGame(object):
             output += "".join(map(status_spacer, self.deck[5*x:5*x+5]))
             output += "\n"
         return output
+
+class ActivityLog:
+
+    def __init__(self, log = []):
+        self.log = []
+    
+    def addEntry(self, entry):
+        self.log.append(entry)
+
+    def serialize(self):
+        return {
+            "log": [entry.serialize() for entry in self.log]
+        }
+
+class LogEntry:
+
+    def __init__(self, clue, side, guesses, numCorrect, numIncorrect):
+        self.clue = clue
+        self.side = side
+        self.guesses = guesses
+    
+    def serialize(self):
+        return {
+            "clue": self.clue.serialize(),
+            "side": self.side.name,
+            "guesses": [card.serialize() for card in self.guesses]
+        }
+
+class LogEntryBuilder:
+
+    def __init__(self):
+        self.tracked_guesses = []
+        self.side = None
+        self.clue = None
+
+    def track_side(self, side):
+        self.side = side
+
+    def track_clue(self, clue):
+        self.clue = clue
+
+    def track_guess(self, card):
+        self.tracked_guesses.append(card)
+
+    def clear_tracking(self):
+        self.side = None
+        self.clue = None
+        self.tracked_guesses = []
+
+    def build(self, side = self.side, clue = self.clue):
+        numCorrect = 0
+        numIncorrect = 0
+        for guess in self.tracked_guesses:
+            if guess.status == guess.side:
+                numCorrect += 1
+            else:
+                numIncorrect += 1
+        entry = LogEntry(side, clue, deepcopy(self.tracked_guesses), numCorrect, numIncorrect)
+
+        entry.clearTracking()
+        return entry
+
+class Clue:
+
+    def __init__(self, word, number):
+        self.word = word
+        self.number = number
+
+    def serialize(self):
+        return {
+            "word": word if word is not None else "",
+            "number": str(number) if number is None else ""
+        }
+
+    @classmethod
+    def serialize_clue(clue):
+        if clue is None:
+            return {
+                "word": "",
+                "number": ""
+            }
+        else:
+            return clue.serialize()
+
 
 if __name__ == "__main__":
     cg = CodenameGame()

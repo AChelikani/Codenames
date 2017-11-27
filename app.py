@@ -2,12 +2,16 @@ from flask import Flask, render_template, request, abort, jsonify, send_from_dir
 from config import global_config as config
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from game_manager import GameManager
-from game_code import generate_unique_game_code
+from game_code import GameCode, generate_unique_game_code
+from game_store import ActiveGameStore
 import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
+
+# Active games store
+game_store = ActiveGameStore()
 
 active_games = {}
 
@@ -29,10 +33,7 @@ def create_game():
     # TODO: Note that going on the create page and refreshing results in many games being
     # added to the active games dict, which is not desired. Unclear on a resolution
     # for this issue yet.
-    code_len = config.getGameCodeLen()
-    existing_codes = active_games.keys()
-    new_code = generate_unique_game_code(code_len, existing_codes)
-    active_games[new_code] = GameManager(new_code)
+    new_code = game_store.create_game()
     return render_template('create.html', game_code=new_code)
 
 @app.route('/join')
@@ -40,44 +41,41 @@ def join_game():
     return render_template('join.html', error_text="")
 
 # Unique route serving game data
-@app.route('/g/<game_code>')
-def game_data(game_code):
-    if game_code in active_games:
-        game = active_games[game_code].game
+@app.route('/g/<game_code_raw>')
+def game_data(game_code_raw):
+    game_code = GameCode(game_code_raw)
+    if game_store.contains_game(game_code):
         # Return json object of game state
         # TODO: 1) determine how we want to serialize game data
         #       2) share models between front and backends
         #       3) validate whether or not this user is a spymaster and should
         #          see the map
         #       4) if the game has not started, redirect to lobby
-        # This is temporary to get things started.
         return render_template(
             'game.html',
-            game_code=game_code,
-            board_size=config.getNumCards(),
-            map=[str(position.name) for position in game.map_card.map],
-            words=[card.word for card in game.deck],
-            starting_color=game.map_card.starting_color.name,
+            game_bundle=game_store.get_game_bundle(game_code)
         )
     else:
         # Temporarily create the game if it doesn't exist, just to speed up
         # dev
-        active_games[game_code] = GameManager(game_code)
-        return game_data(game_code)
+        game_store.create_game(game_code)
+        return game_data(game_code_raw)
 
 # Unique route for the game lobby before the game begins
 @app.route('/l/<game_code>')
-def game_lobby(game_code):
-    if game_code in active_games:
-        return render_template('lobby.html', game_code=game_code)
+def game_lobby(game_code_raw):
+    game_code = GameCode(game_code_raw)
+    if game_store.contains_game(game_code):
+        return render_template('lobby.html', game_code=game_code.serialize())
     else:
         abort(404)
 
 @app.route('/add_to_lobby/', methods=['POST'])
 def add_to_lobby():
-    game_code = request.form["game_code"]
-    if game_code in active_games:
-        return render_template('lobby.html', game_code=game_code)
+    game_code_raw = request.form["game_code"]
+    game_code = GameCode(game_code_raw)
+    if game_store.contains_game(game_code):
+        return render_template('lobby.html', game_code=game_code_raw)
     else:
         return render_template('join.html', error_text="Invalid game code")
 
@@ -87,13 +85,14 @@ def add_to_lobby():
 def player_join_lobby(message):
     # TODO: sid should be replaced with some kind of cookie
     sid = request.sid
-    game_code = message['game_code']
+    game_code_raw = message['game_code']
+    game_code = GameCode(game_code_raw)
 
-    if game_code not in active_games:
+    if not game_store.contains_game(game_code):
         # TODO error handling
         return
 
-    game_manager = active_games[game_code]
+    game_manager = game_store.get_game(game_code)
 
     # Send the new player the current lobby state
     players = [p.serialize() for p in game_manager.get_players().values()]
@@ -102,8 +101,7 @@ def player_join_lobby(message):
     }, room=game_code)
 
     # Add the user to the game and to the socket room
-    player = game_manager.add_player(sid)
-    players_games[sid] = game_code
+    player = game_store.add_player(sid)
     join_room(game_code)
 
     # Notify all players in the lobby of the new user
@@ -172,7 +170,6 @@ def player_switch_role():
 @socketio.on('start game')
 def player_start_game(message):
 	raise NotImplementedError("Please Implement this method")
-
 
 # Socket listeners for game actions
 

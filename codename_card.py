@@ -25,5 +25,11 @@ class Card(object):
     def get_position(self):
         return self.position
 
+    def serialize(self):
+        return {
+            "status": self.status.name,
+            "word": self.word
+        }
+
     def __repr__(self):
         return self.word

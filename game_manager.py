@@ -43,3 +43,13 @@ class GameManager(object):
 
     def get_game(self):
         return self.game
+
+    def serialize_game(self):
+        game_bundle = self.game.serialize()
+        game_bundle['gameCode'] = str(self.game_code)
+        return game_bundle
+
+    def serialize_game_with_players(self):
+        game_bundle = self.serialize_game()
+        game_bundle['players'] = [{'playerId': playerId, 'player': player.serialize()} for playerId, player in self.players.iteritems()]
+        return game_bundle
