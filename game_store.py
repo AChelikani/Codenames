@@ -1,5 +1,6 @@
 from game_code import *
 from codename_game import CodenameGame
+from game_manager import GameManager
 from codename_player import PlayerRole
 from config import global_config as config
 
@@ -9,11 +10,10 @@ class ActiveGameStore:
 		self.active_games = {} # Dict[GameCode, GameManager]
 		self.player_games = {} # Dict[str(PlayerId), GameCode]
 
-	def create_game(self, game_code = create_game_code()):
-		code_len = config.getGameCodeLen()
-		new_code = generate_unique_game_code(code_len, self.active_games)
-		active_games[new_code] = GameManager(new_code)
-		return new_code
+	def create_game(self, game_code_option = None):
+		game_code = self.create_game_code() if game_code_option is None else game_code_option
+		self.update_game(game_code, GameManager(game_code))
+		return game_code
 
 	def create_game_code(self):
 		code_len = config.getGameCodeLen()
@@ -22,12 +22,16 @@ class ActiveGameStore:
 	def contains_game(self, game_code):
 		return game_code in self.active_games
 
+	def contains_player(self, player_id):
+		return player_id in self.player_games
+
 	def update_game(self, game_code, new_game):
 		self.active_games[game_code] = new_game
 
 	def remove_player(self, player_id, game_code):
-		self.active_games[game_code].remove_player(player_id)
-		self.player_games[player_id] = game_code
+		player = self.active_games[game_code].remove_player(player_id)
+		del self.player_games[player_id]
+		return player
 
 	def add_player(self, player_id, game_code):
 		new_player = self.active_games[game_code].add_player(player_id)
@@ -35,7 +39,14 @@ class ActiveGameStore:
 		return new_player
 
 	def get_game(self, game_code):
+		if game_code not in self.active_games:
+			raise ValueError("%s not found in game store" % str(game_code))
 		return self.active_games[game_code]
+
+	def get_game_code(self, player_id):
+		if player_id not in self.player_games:
+			raise ValueError("%s not found in game store" % player_id)
+		return self.player_games[player_id]
 
 	def get_game_bundle(self, game_code):
 		return self.get_game(game_code).serialize_game()
@@ -47,3 +58,6 @@ class ActiveGameStore:
 		if role is PlayerRole.SPYMASTER:
 			game_bundle['map'] = game_manager.game.map.serialize()
 		return game_bundle
+
+	def get_all_active_games(self):
+		return [game_code.serialize() for game_code in self.active_games.keys()]

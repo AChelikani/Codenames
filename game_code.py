@@ -1,6 +1,5 @@
 from string import ascii_lowercase, digits
 from random import SystemRandom
-from typing import NewType
 
 class GameCode:
 
@@ -12,6 +11,14 @@ class GameCode:
 
 	def __str__(self):
 		return str(self.code)
+
+	def __eq__(self, other):
+		if isinstance(self, other.__class__):
+			return self.code == other.code
+		return False
+
+	def __ne__(self, other):
+		return not self.__eq__(other)   	
 
 	def serialize(self):
 		return self.__str__()

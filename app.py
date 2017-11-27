@@ -13,16 +13,11 @@ socketio = SocketIO(app)
 # Active games store
 game_store = ActiveGameStore()
 
-active_games = {}
-
-# Store mapping player ids to game ids
-players_games = {}
-
 # Home page for game creation and game joining
 @app.route('/')
 def home():
     # Get all active games only for debugging for now
-    return render_template('home.html', active_games=list(active_games.keys()))
+    return render_template('home.html', active_games=list(game_store.get_all_active_games()))
 
 @app.route('/how_to_play')
 def how_to_play():
@@ -41,10 +36,10 @@ def join_game():
     return render_template('join.html', error_text="")
 
 # Unique route serving game data
-@app.route('/g/<game_code_raw>')
-def game_data(game_code_raw):
-    game_code = GameCode(game_code_raw)
-    if game_store.contains_game(game_code):
+@app.route('/g/<game_code>')
+def game_data(game_code):
+    game_code_obj = GameCode(game_code)
+    if game_store.contains_game(game_code_obj):
         # Return json object of game state
         # TODO: 1) determine how we want to serialize game data
         #       2) share models between front and backends
@@ -53,29 +48,29 @@ def game_data(game_code_raw):
         #       4) if the game has not started, redirect to lobby
         return render_template(
             'game.html',
-            game_bundle=game_store.get_game_bundle(game_code)
+            game_bundle=game_store.get_game_bundle(game_code_obj)
         )
     else:
         # Temporarily create the game if it doesn't exist, just to speed up
         # dev
-        game_store.create_game(game_code)
-        return game_data(game_code_raw)
+        game_store.create_game(game_code_obj)
+        return game_data(game_code)
 
 # Unique route for the game lobby before the game begins
 @app.route('/l/<game_code>')
-def game_lobby(game_code_raw):
-    game_code = GameCode(game_code_raw)
-    if game_store.contains_game(game_code):
-        return render_template('lobby.html', game_code=game_code.serialize())
+def game_lobby(game_code):
+    game_code_obj = GameCode(game_code)
+    if game_store.contains_game(game_code_obj):
+        return render_template('lobby.html', game_code=game_code_obj.serialize())
     else:
         abort(404)
 
 @app.route('/add_to_lobby/', methods=['POST'])
 def add_to_lobby():
-    game_code_raw = request.form["game_code"]
-    game_code = GameCode(game_code_raw)
+    game_code_str = request.form["game_code"]
+    game_code = GameCode(game_code_str)
     if game_store.contains_game(game_code):
-        return render_template('lobby.html', game_code=game_code_raw)
+        return render_template('lobby.html', game_code=game_code.serialize())
     else:
         return render_template('join.html', error_text="Invalid game code")
 
@@ -101,7 +96,7 @@ def player_join_lobby(message):
     }, room=game_code)
 
     # Add the user to the game and to the socket room
-    player = game_store.add_player(sid)
+    player = game_store.add_player(sid, game_code)
     join_room(game_code)
 
     # Notify all players in the lobby of the new user
@@ -112,31 +107,34 @@ def player_join_lobby(message):
 @socketio.on('disconnect')
 def player_leave_lobby():
     sid = request.sid
-    game_code = players_games.pop(sid, None)
 
-    if game_code is None:
+    if not game_store.contains_player(sid):
+        return
+        
+    game_code = game_store.get_game_code(sid)
+
+    if not game_store.contains_game(sid):
         return
 
-    game_manager = active_games[game_code]
-    player = game_manager.remove_player(sid)
+    player = game_store.remove_player(sid, game_code)
     leave_room(game_code)
     emit('player disconnect', {
         'player': player.serialize()
     }, broadcast=True, room=game_code)
 
-# TODO: this will change with arvind's changes
 @socketio.on('player switch team')
 def player_switch_team():
     sid = request.sid
-    if sid not in players_games:
+
+    if not game_store.contains_player(sid):
         return
 
-    game_code = players_games[sid]
+    game_code = game_store.get_game_code(sid)
 
-    if game_code not in active_games:
+    if not game_store.contains_game(game_code):
         return
 
-    game_manager = active_games[game_code]
+    game_manager = game_store.get_game(game_code)
 
     game_manager.switch_player_team(sid)
 
@@ -145,19 +143,19 @@ def player_switch_team():
         'players': players
     }, broadcast=True, room=game_code)
 
-# TODO: this will change with arvind's changes
 @socketio.on('player switch role')
 def player_switch_role():
     sid = request.sid
-    if sid not in players_games:
+
+    if not game_store.contains_player(sid):
         return
 
-    game_code = players_games[sid]
+    game_code = game_store.get_game_code(sid)
 
-    if game_code not in active_games:
+    if not game_store.contains_game(game_code):
         return
 
-    game_manager = active_games[game_code]
+    game_manager = game_store.get_game(game_code)
 
     game_manager.switch_player_role(sid)
 

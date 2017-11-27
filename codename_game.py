@@ -68,6 +68,8 @@ class CodenameGame(object):
             return False
 
     def switch_turns(self, word, number):
+        self.log_entry_builder.track_clue(self.side)
+        self.log_entry_builder.track_clue(self.clue)
         self.activity_log.addEntry(self.log_entry_builder.build(self.side, self.clue))
         self.current_turn = CardStatus.RED if self.current_turn == CardStatus.BLUE else CardStatus.BLUE
         self.set_current_clue(word, number)
@@ -93,7 +95,7 @@ class CodenameGame(object):
         card_statuses = []
         for card in self.deck:
             card_statuses.append(card.get_status())
-        serialized_deck = [card.serialize() for card in deck]
+        serialized_deck = [card.serialize() for card in self.deck]
         return {
             "deck" : serialized_deck,
             "redCount": self.red_count,
@@ -136,12 +138,16 @@ class LogEntry:
         self.clue = clue
         self.side = side
         self.guesses = guesses
+        self.numCorrect = numCorrect
+        self.numIncorrect = numIncorrect
     
     def serialize(self):
         return {
             "clue": self.clue.serialize(),
             "side": self.side.name,
-            "guesses": [card.serialize() for card in self.guesses]
+            "guesses": [card.serialize() for card in self.guesses],
+            "numCorrect": str(self.numCorrect),
+            "numIncorrect": str(self.numIncorrect)
         }
 
 class LogEntryBuilder:
@@ -165,7 +171,7 @@ class LogEntryBuilder:
         self.clue = None
         self.tracked_guesses = []
 
-    def build(self, side = self.side, clue = self.clue):
+    def build(self):
         numCorrect = 0
         numIncorrect = 0
         for guess in self.tracked_guesses:
@@ -190,7 +196,7 @@ class Clue:
             "number": str(number) if number is None else ""
         }
 
-    @classmethod
+    @staticmethod
     def serialize_clue(clue):
         if clue is None:
             return {
