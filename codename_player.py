@@ -31,7 +31,7 @@ class Player(object):
     # TODO: this should be swapped out with whatever serialization we choose
     def serialize(self):
         return {
-        'id': self.id, # this is technically bad practice but ¯\_(ツ)_/¯
+        'id': self.id,
         'avatar': self.avatar,
         'team': self.team.value,
         'role': self.role.value

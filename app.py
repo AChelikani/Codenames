@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, send_from_directory, session
+from flask import Flask, render_template, request, abort, send_from_directory, session, url_for
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_session import Session
 from config import global_config as config
@@ -51,9 +51,13 @@ def game_data(game_code):
         #       3) validate whether or not this user is a spymaster and should
         #          see the map
         #       4) if the game has not started, redirect to lobby
+        player_id = session['player_id']
+        game_manager = game_store[game_code_obj]
+
         return render_template(
             'game.html',
-            game_bundle=game_store.get_game_bundle(game_code_obj)
+            game_bundle=game_store.get_game_bundle(game_code_obj),
+            player_type=player_id
         )
     else:
         # Temporarily create the game if it doesn't exist, just to speed up
@@ -175,10 +179,14 @@ def player_switch_role():
 
 
 @socketio.on('start game')
-def player_start_game(message):
-	raise NotImplementedError("Please Implement this method")
-
-# Socket listeners for game actions
+def player_start_game():
+    try:
+        game_code_raw, player_id = get_game_data_from_session(session)
+    except ValueError as err:
+        emit('error', str(err))
+        return
+    game_code = GameCode(game_code_raw)
+    emit('start', url_for('game_data', game_code=game_code), room=game_code, broadcast=True)
 
 @socketio.on('pause game')
 def player_pause_game(message):

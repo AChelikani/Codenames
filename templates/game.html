@@ -4,7 +4,6 @@
 <div id="app">
   <board :data="wordBoardData" :size="boardSize"></board>
   <br></br>
-  <board :data="mapBoardData" :size="boardSize"></board>
 </div>
 {% endraw %}
 {% endblock %}
@@ -61,8 +60,7 @@
     }
   });
 
-  var words = {{ words|tojson }};
-  var map = {{ map|tojson }};
+  var words = {{ game_bundle.deck }};
 
   var wordBoardData = words.map(function(word) {
     return {
@@ -70,22 +68,15 @@
     };
   });
 
-  var mapBoardData = words.map(function(word, i) {
-    return {
-      word: word,
-      status: map[i]
-    };
-  });
 
-  var boardSize = {{ board_size|tojson }};
-  var startingColor = {{ starting_color|tojson }};
+  var boardSize = {{ game_bundle.deck }}.length;
+  var startingColor = {{ game_bundle.current_turn }};
 
   var App = new Vue({
     el: '#app',
     data: {
       boardSize: boardSize,
       wordBoardData: wordBoardData,
-      mapBoardData: mapBoardData
     }
   });
 </script>

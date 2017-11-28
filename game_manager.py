@@ -32,6 +32,11 @@ class GameManager(object):
     def get_players(self):
         return self.players
 
+    def get_player(self, player_id):
+        if player_id in self.players:
+            return self.players[player_id]
+        return None
+
     def get_dangling_players(self):
         return self.dangling_players
 

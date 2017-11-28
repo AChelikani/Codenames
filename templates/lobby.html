@@ -57,7 +57,7 @@ td img {
       </div>
     </div>
     <button class="success" v-on:click="switchTeams">Switch teams</button>
-    <button class="warning">Start Game</button>
+    <button class="warning" v-on:click="startGame">Start Game</button>
     <transition-group name="list" tag="p">
       <p v-for="error in errors" class="error-text" v-bind:key="error">
         {{ "Error: " + error }}
@@ -165,6 +165,9 @@ td img {
     methods: {
       switchTeams: function(event) {
         socket.emit('player switch team');
+      },
+      startGame: function(event) {
+          socket.emit('start game');
       }
     }
   });
@@ -191,6 +194,10 @@ td img {
     data.players.forEach(function(player) {
       players.push(player);
     });
+  });
+
+  socket.on('start', function(data) {
+     window.location.replace(data); 
   });
 
   socket.on('error', function(error) {
