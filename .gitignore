@@ -3,3 +3,4 @@
 /lib
 pip-selfcheck.json
 *.pyc
+flask_session/

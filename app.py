@@ -1,14 +1,19 @@
 from flask import Flask, render_template, request, abort, send_from_directory, session
-from config import global_config as config
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_session import Session
+from config import global_config as config
 from game_manager import GameManager
 from game_code import GameCode, generate_unique_game_code
 from game_store import ActiveGameStore
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, manage_session=True)
+app.config['SECRET_KEY'] = 'a slightly better, not so predictable secret!'
+app.config['SESSION_TYPE'] = 'filesystem'
+
+Session(app)
+socketio = SocketIO(app, manage_session=False)
+
 
 # Active games store
 game_store = ActiveGameStore()
