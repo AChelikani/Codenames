@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, send_from_directory, session, url_for
+from flask import Flask, render_template, request, abort, send_from_directory, session, url_for, redirect
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_session import Session
 from config import global_config as config
@@ -52,12 +52,15 @@ def game_data(game_code):
         #          see the map
         #       4) if the game has not started, redirect to lobby
         player_id = session['player_id']
-        game_manager = game_store[game_code_obj]
+        print player_id
+        game_manager = game_store.get_game(game_code_obj)
+        player = game_manager.get_player(player_id)
+        print player.role.value
 
         return render_template(
             'game.html',
             game_bundle=game_store.get_game_bundle(game_code_obj),
-            player_type=player_id
+            player_role=player.role.value
         )
     else:
         # Temporarily create the game if it doesn't exist, just to speed up
@@ -80,9 +83,9 @@ def add_to_lobby():
     game_code_str = request.form["game_code"]
     game_code = GameCode(game_code_str)
     if game_store.contains_game(game_code):
-        return render_template('lobby.html', game_code=game_code.serialize())
+        return redirect(url_for('game_lobby', game_code=game_code.serialize()))
     else:
-        return render_template('join.html', error_text="Invalid game code")
+        return redirect(url_for('join_game', error_text="Invalid game code"))
 
 def get_game_data_from_session(session):
     if 'game_code' not in session:

@@ -6,6 +6,11 @@
   <br></br>
 </div>
 {% endraw %}
+{% if player_role == "SPYMASTER" %}
+Spymaster content
+{% else %}
+Player content
+{% endif %}
 {% endblock %}
 {% block scripts %}
 {% raw %}
