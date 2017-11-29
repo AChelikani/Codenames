@@ -188,6 +188,9 @@ def player_start_game():
     except ValueError as err:
         emit('error', str(err))
         return
+
+    # TODO: Add validation for number of different roles/num players on each team, etc.
+
     game_code = GameCode(game_code_raw)
     emit('start', url_for('game_data', game_code=game_code), room=game_code, broadcast=True)
 
@@ -201,7 +204,22 @@ def player_end_game(message):
 
 @socketio.on('player turn')
 def player_turn(message):
-	raise NotImplementedError("Please Implement this method")
+    try:
+        game_code_raw, player_id = get_game_data_from_session(session)
+    except ValueError as err:
+        emit('error', str(err))
+        return
+    game_code = GameCode(game_code_raw)
+    game_manager = game_store.get_game_bundle(game_code)
+    player_id = session['player_id']
+    player = game_manager.get_player(player_id)
+
+    if player.role == PlayerRole.SPYMASTER:
+        # data = stringified {"Clue" : clueword, "Num" : #guesses}
+        pass
+    else:
+        # data = 
+        pass
 
 @app.route('/favicon.ico')
 def favicon():
