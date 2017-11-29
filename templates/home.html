@@ -10,7 +10,7 @@
   <ul>
     {% for game_id in active_games  %}
     <li>
-      <a href="{{ url_for('game_data', game_code=game_id) }}">
+      <a href="{{ url_for('game.game_data', game_code=game_id) }}">
         {{ game_id}}
       </a>
     </li>

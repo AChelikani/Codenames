@@ -8,8 +8,8 @@ class PlayerTeam(Enum):
     RED = 'RED'
 
 class PlayerRole(Enum):
-    SPYMASTER = 'SPYMASTER'
-    PLAYER = 'PLAYER'
+    SPYMASTER = 'Spymaster'
+    PLAYER = 'Player'
 
 class Player(object):
 

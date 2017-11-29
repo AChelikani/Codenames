@@ -4,6 +4,7 @@ from codename_player import PlayerRole
 from config import global_config as config
 from utils import JSONUtils
 
+
 class ActiveGameStore:
 	''' In-memory store for games currently in play (active). '''
 
@@ -22,7 +23,7 @@ class ActiveGameStore:
 		return game_code
 
 	def create_game_code(self):
-		''' Wrapper method for generating new game code 
+		''' Wrapper method for generating new game code
 			with the globally configured game code length.
 		'''
 		code_len = config.getGameCodeLen()
@@ -74,7 +75,7 @@ class ActiveGameStore:
 
 	def get_game_bundle(self, game_code):
 		'''	Returns JSON bundle of all dynamic game information
-			that changes incrementally on each turn (for the specified game). 
+			that changes incrementally on each turn (for the specified game).
 			This includes:
 				- GameManager
 					- Game code
@@ -89,7 +90,7 @@ class ActiveGameStore:
 		return self.get_game(game_code).serialize_game()
 
 	def get_full_game_bundle(self, game_code, role):
-		'''	Returns JSON bundle of all game information (for the specified game). 
+		'''	Returns JSON bundle of all game information (for the specified game).
 			This includes:
 				- GameManager
 					- Game code
@@ -137,3 +138,5 @@ class ActiveGameStore:
 		''' Gets JSON "lobby bundle" of all active players in game. '''
 		game_manager = self.get_game(game_code)
 		return game_manager.serialize_players()
+
+game_store = ActiveGameStore()
