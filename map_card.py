@@ -1,4 +1,4 @@
-from config import CardStatus
+from codename_card import CardStatus
 from config import global_config as config
 import random
 

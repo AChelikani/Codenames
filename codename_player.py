@@ -12,12 +12,22 @@ class PlayerRole(Enum):
     PLAYER = 'PLAYER'
 
 class Player(object):
-    def __init__(self, used_avatars):
-        self.id = id
-        self.team = choice(list(PlayerTeam))
-        self.role = choice(list(PlayerRole))
-        self.avatar = Player._get_avatar(used_avatars)
-        self.id = str(uuid4())
+
+	# TODO: Move sampling logic to Player static constructor,
+	# 	and make constructor a value/direct field assignment constructor. (Done)
+	# TODO: Document change
+    def __init__(self, id, team, role, avatar):
+    	self.id = id
+    	self.team = team
+    	self.role = role
+    	self.avatar = avatar
+
+    @classmethod
+    def new_player(cls, used_avatars):
+    	return cls(id=str(uuid4()), 
+    		team=choice(list(PlayerTeam)),
+    		role=choice(list(PlayerRole)),
+    		avatar=Player._get_avatar(used_avatars))
 
     @staticmethod
     def _get_avatar(used_avatars):

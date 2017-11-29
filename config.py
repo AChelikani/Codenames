@@ -1,14 +1,7 @@
-from enum import Enum
 import json
 
-class CardStatus(Enum):
-    EMPTY = 0
-    NEUTRAL = 1
-    RED = 2
-    BLUE = 3
-    BOMB = 4
-
 class Configuration:
+    ''' Key-value in-memory configuration object. '''
 
     def __init__(self, dict):
         self.NUM_CARDS = dict.get("NUM_CARDS", DefaultConfiguration.NUM_CARDS)
@@ -21,14 +14,20 @@ class Configuration:
 
     @classmethod
     def fileConfiguration(cls):
+        ''' Creates configuration object from JSON file. '''
         return cls(FileConfiguration.parseConfigDict())
 
     @staticmethod
     def factory(type):
+        ''' Factory method for constructing configuration by type.
+            Extensible to other configuration source types.
+        '''
         if type == "file":
             return Configuration.fileConfiguration()
         else:
             raise ValueError("Unknown configuration type specified")
+
+    # Getters
 
     def getNumCards(self):
         return self.NUM_CARDS
@@ -52,9 +51,11 @@ class Configuration:
         return self.AVATARS
 
 class FileConfiguration:
+    ''' Namespace for file configuration related helper methods. '''
 
     @staticmethod
     def parseConfigDict():
+        ''' Parses JSON into python dictionary. '''
         configFilePath = FileConfiguration.getConfigFilePath()
         dict = {}
         with open(configFilePath, 'r') as f:
@@ -63,9 +64,11 @@ class FileConfiguration:
 
     @staticmethod
     def getConfigFilePath():
+        ''' Get JSON file path (THIS SHOULD NOT CHANGE TRIVIALLY). '''
         return "resources/config.json"
 
 class DefaultConfiguration:
+    ''' Default in-code configuration options (if file is unavailable). '''
 
     NUM_CARDS = 25
     NUM_BOMBS = 1

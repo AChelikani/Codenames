@@ -52,10 +52,10 @@ def game_data(game_code):
         #          see the map
         #       4) if the game has not started, redirect to lobby
         player_id = session['player_id']
-        print player_id
+        print(player_id)
         game_manager = game_store.get_game(game_code_obj)
         player = game_manager.get_player(player_id)
-        print player.role.value
+        print(player.role.value)
 
         return render_template(
             'game.html',
