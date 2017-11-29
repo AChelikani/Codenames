@@ -1,5 +1,6 @@
 from enum import Enum
 from flask import Blueprint, render_template, session, url_for
+from config import global_config as config
 from game_code import GameCode
 from game_store import game_store
 from keys import GAME_CODE_KEY, PLAYER_ID_KEY
@@ -21,25 +22,31 @@ def game_data(game_code):
     game_code_obj = GameCode(game_code)
     if not game_store.contains_game(game_code_obj):
         # TODO error handling
-        pass
-    player_id = session[PLAYER_ID_KEY]
-    if not player_id:
-        # TODO
+        return 'TODO: game store doesn\'t have game code (uh oh)'
+
+    if PLAYER_ID_KEY not in session:
         return 'TODO: You do not have a player id, probably cause you haven\'t lobbied up!'
 
-    if game_store.is_player_dangling(game_code_obj, player_id):
+    player_id = session[PLAYER_ID_KEY]
+
+    if game_store.does_player_exist(game_code_obj, player_id):
+        game_manager = game_store.get_game(game_code_obj)
+        player = game_manager.get_player(player_id)
+    elif game_store.is_player_dangling(game_code_obj, player_id):
         player = game_store.restore_player(game_code_obj, player_id)
     else:
-        return 'TODO: you are not in this game!'
+        return 'TODO: your player has been lost'
+
 
     return render_template(
        'game.html',
-       game_bundle=game_store.get_game_bundle(game_code_obj),
-       player_role=player.role.value
+       game_bundle=game_store.get_full_game_bundle(game_code_obj, player.role),
+       player_role=player.role.value,
+       board_size=config.getNumCards(),
    )
 
 
-@socketio.on('player turn')
+@socketio.on(GameEvent.TURN.value)
 def player_turn(message):
     try:
         game_code_raw, player_id = get_session_data(session)

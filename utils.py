@@ -33,7 +33,7 @@ class JSONUtils:
 
 	@staticmethod
 	def include_in_place(parent, new_child_key, new_child):
-		if (new_child_key not in parent):
+		if (new_child_key in parent):
 			raise ValueError("New child key conflicts with existing key in parent JSON object. Objects cannot be composed. ")
 		parent[new_child_key] = new_child
 		return parent

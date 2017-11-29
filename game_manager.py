@@ -54,7 +54,8 @@ class GameManager(object):
     def restore_player(self, player_id):
         ''' Restores disconnected player to active player mapping. '''
         player = self.dangling_players.pop(player_id)
-        player = Player(player.id, player.team, player.role, Player._get_avatar(self.used_avatars))
+        avatar = Player._get_avatar(self.used_avatars, pref=player.avatar)
+        player = Player(player.id, player.team, player.role, avatar)
         return self.add_player(player)
 
     def switch_player_team(self, player_id):

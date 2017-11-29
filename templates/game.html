@@ -1,45 +1,35 @@
 {% extends 'base.html' %}
+{% block head %}
+<style type="text/css">
+</style>
+{% endblock %}
 {% block content %}
 {% raw %}
 <div id="app">
-  <board :data="wordBoardData" :size="boardSize"></board>
+  <h2>{{ playerRole }}</h2>
+  <board :data="deck" :size="boardSize"></board>
+  <br/><br/>
+  <board :data="map" :size="boardSize"></board>
   <br></br>
 </div>
 {% endraw %}
-{% if player_role == "SPYMASTER" %}
-Spymaster content
-{% else %}
-Player content
-{% endif %}
 {% endblock %}
 {% block scripts %}
 {% raw %}
 <script type="text/x-template" id="board-template">
-  <table class="primary">
-    <thead>
-      <tr>
-        <th>Player</th>
-        <th>Role</th>
-        <th v-if="teamColor==='RED'" style="background-color: #ff4136">
-          Player
-        </th>
-        <th v-if="teamColor==='RED'" style="background-color: #ff4136">
-          Role
-        </th>
-    </thead>
+  <table>
+    <thead></thead>
     <tbody>
-      <tr v-for="player in players">
-        <td>
-          <img class="avatar" :src="avatarUri + player.avatar + '.png'">
-          </img>
-        </td>
-        <td>
-          <select style="width: 200px" :disabled="player.id !== socket.id">
-            <option v-if="player.id === socket.id">Select your role</option>
-            <option v-if="player.id !== socket.id">Selecting a role</option>
-            <option>Spymaster</option>
-            <option>Operative</option>
-          </select>
+      <tr v-for="row in boardData">
+        <td v-for="col in row">
+          <span v-bind:class="{
+            red: col.status === 'RED',
+            blue: col.status === 'BLUE',
+            neutral: col.status === 'NEUTRAL',
+            bomb: col.status === 'BOMB'
+          }">
+            {{col.word}}
+          </span>
         </td>
       </tr>
     </tbody>
@@ -47,6 +37,20 @@ Player content
 </script>
 {% endraw %}
 <script>
+  var playerRole = {{ player_role|tojson|safe }};
+  var boardSize = {{ board_size|tojson|safe }};
+  var gameBundle = {{ game_bundle|tojson|safe }};
+  var map = [];
+
+  if (gameBundle.map) {
+    map = gameBundle.deck.map(function(pos, i) {
+      return {
+        word: pos.word,
+        status: gameBundle.map.map[i]
+      };
+    });
+  }
+
   Vue.component('board', {
     template: '#board-template',
     props: {
@@ -65,23 +69,13 @@ Player content
     }
   });
 
-  var words = {{ game_bundle.deck }};
-
-  var wordBoardData = words.map(function(word) {
-    return {
-      word: word
-    };
-  });
-
-
-  var boardSize = {{ game_bundle.deck }}.length;
-  var startingColor = {{ game_bundle.current_turn }};
-
   var App = new Vue({
     el: '#app',
     data: {
+      playerRole: playerRole,
       boardSize: boardSize,
-      wordBoardData: wordBoardData,
+      deck: gameBundle.deck,
+      map: map
     }
   });
 </script>

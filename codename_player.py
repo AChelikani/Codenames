@@ -24,13 +24,15 @@ class Player(object):
 
     @classmethod
     def new_player(cls, used_avatars):
-    	return cls(id=str(uuid4()), 
-    		team=choice(list(PlayerTeam)),
-    		role=choice(list(PlayerRole)),
-    		avatar=Player._get_avatar(used_avatars))
+        return cls(id=str(uuid4()),
+                   team=choice(list(PlayerTeam)),
+                   role=choice(list(PlayerRole)),
+                   avatar=Player._get_avatar(used_avatars))
 
     @staticmethod
-    def _get_avatar(used_avatars):
+    def _get_avatar(used_avatars, pref=None):
+        if pref is not None and pref not in used_avatars:
+            return pref
         avatars = config.getAvatars()
         available_avatars = [x for x in avatars if x not in used_avatars]
         if len(available_avatars) < 1:

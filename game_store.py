@@ -107,10 +107,10 @@ class ActiveGameStore:
 		'''
 		game_manager = self.get_game(game_code)
 		game_bundle = game_manager.serialize_game()
-		JSONUtils.merge_in_place(game_bundle, game_manager.serialize_players_with_mapping())
+		JSONUtils.merge_in_place(game_bundle, game_manager.serialize_players_mapping())
 		JSONUtils.include_in_place(game_bundle, 'boardSize', str(config.getNumCards()))
 		if role is PlayerRole.SPYMASTER:
-			JSONUtils.include_in_place(game_bundle, 'map', game_manager.game.map.serialize())
+			JSONUtils.include_in_place(game_bundle, 'map', game_manager.game.map_card.serialize())
 		return game_bundle
 
 	def get_all_active_games(self):

@@ -29,6 +29,7 @@ app.register_blueprint(game)
 from create_handlers import create
 app.register_blueprint(create)
 
+
 # TODO make this configurable via config
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 logging.getLogger('socketio').setLevel(logging.WARNING)
@@ -49,8 +50,7 @@ def how_to_play():
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static','img','icons'),
-                               'question_mark_icon.ico')
+    return send_from_directory(url_for('static', 'img/icons/question_mark_icon.ico'))
 
 # TODO: add config for port,
 if __name__ == "__main__":
