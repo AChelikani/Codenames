@@ -6,6 +6,9 @@ from word_source import WordsInMemory
 from copy import deepcopy
 
 class CodenameGame(object):
+    ''' CodenameGame contains a representation of the game board, as players
+        see it.
+    '''
     def __init__(self):
         # An array of Card objects
         self.deck = self._gen_cards()
@@ -20,6 +23,7 @@ class CodenameGame(object):
     # Generate a new deck of cards, chosing a set of cards randomly from the set
     # of all cards.
     def _gen_cards(self):
+        ''' Generate a set of word cards '''
         words = WordsInMemory.sampleWords(config.getNumCards())
         cards = []
         position = 0
@@ -29,22 +33,26 @@ class CodenameGame(object):
         return cards
 
     def mark_card(self, ind, new_status):
+        ''' Mark a card as either red or blue, based on the passed in status. '''
         assert(0 <= ind < len(deck))
         self.deck[ind].set_status(new_status)
 
     def get_card_by_word(self, word):
+        ''' Get a card object from the board given a word '''
         for card in self.deck:
             if (card.get_word() == word):
                 return card
         return None
 
     def set_current_clue(self, word, number):
+        ''' Set the current clue that the spymaster has given '''
         assert(int(number) == number), "Not a valid number"
 
         self.current_clue = Clue(word, number)
 
     # Makes a guess, and returns boolean based on correctness of guess
     def make_guess(self, word):
+        ''' Represents the player making a guess by selecting a specific word '''
         if (self.current_clue is None):
             raise Exception("No clue given")
 
@@ -68,6 +76,7 @@ class CodenameGame(object):
             return False
 
     def switch_turns(self, word, number):
+        ''' Swtich active turn to the other team '''
         self.log_entry_builder.track_clue(self.side)
         self.log_entry_builder.track_clue(self.clue)
         self.activity_log.addEntry(self.log_entry_builder.build(self.side, self.clue))
@@ -75,6 +84,8 @@ class CodenameGame(object):
         self.set_current_clue(word, number)
 
     def is_game_over(self):
+        ''' Check if the gmae is over by checking the counts of red and blue
+            and checking if the bomb was clicked '''
         # Game over condition is that red or blue meets their total possible or the bomb has been hit
 
         # Check if bomb has been uncovered
@@ -92,6 +103,7 @@ class CodenameGame(object):
 
     # Stores the current game state into a JSON
     def serialize(self):
+        ''' Serialize the game board '''
         card_statuses = []
         for card in self.deck:
             card_statuses.append(card.get_status())
@@ -123,7 +135,7 @@ class ActivityLog:
 
     def __init__(self, log = []):
         self.log = []
-    
+
     def addEntry(self, entry):
         self.log.append(entry)
 
@@ -140,7 +152,7 @@ class LogEntry:
         self.guesses = guesses
         self.numCorrect = numCorrect
         self.numIncorrect = numIncorrect
-    
+
     def serialize(self):
         return {
             "clue": self.clue.serialize(),
