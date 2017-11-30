@@ -25,19 +25,21 @@ def game_data(game_code):
         return render_template('rejoin.html')
     game_manager = game_store.get_game(game_code_obj)
 
-    if PLAYER_ID_KEY not in session:
+    if CLIENT_ID_KEY not in session:
         return render_template('rejoin.html')
 
-    player_id = session[PLAYER_ID_KEY]
+    client_id = session[CLIENT_ID_KEY]
 
-    if game_manager.has_active_player(player_id):
-        player = game_manager.get_player(player_id)
-    elif game_manager.has_dangling_player(player_id):
-        player = game_manager.restore_player(player_id)
+    if game_manager.has_active_client(client_id):
+        client = game_manager.get_client(client_id)
+    elif game_manager.has_dangling_client(client_id):
+        client = game_manager.restore_client(client_id)
     else:
         # TODO: redirect to lobby if game hasn't started
         return render_template('rejoin.html')
 
+    # TODO figure out which player's turn it is
+    player = list(client.get_players().values())[0]
     return render_template(
        'game.html',
        game_bundle=game_store.get_full_game_bundle(game_code_obj, player.role),
@@ -49,7 +51,7 @@ def game_data(game_code):
 @socketio.on(GameEvent.TURN.value)
 def player_turn(message):
     try:
-        game_code_raw, player_id = get_session_data(session)
+        game_code_raw, client_id = get_session_data(session)
     except ValueError as err:
         emit('error', str(err))
         return
@@ -58,8 +60,10 @@ def player_turn(message):
     game_manager = game_store.get_game_bundle(game_code)
     game = game_manager.get_game()
 
-    player_id = session[PLAYER_ID_KEY]
-    player = game_manager.get_player(player_id)
+    client_id = session[CLIENT_ID_KEY]
+    client = game_manager.get_client(client_id)
+    # TODO figure out which player's turn it is
+    player = list(client.get_players().values())[0]
 
     if player.role == PlayerRole.SPYMASTER:
         # data = {"Clue" : clueword, "Num" : #guesses}
@@ -80,15 +84,18 @@ def player_turn(message):
         is_correct, card_status = game.make_guess(guessed_word)
         if (is_correct):
             # Proceed with turn
+            pass
         elif (card_status == CardStatus.BOMB):
             # End game, bomb uncovered
+            pass
         else:
             # Flip card, end turn
+            pass
 
 
 @socketio.on('pause game')
 def player_pause_game():
-    print "testing"
+    pass
 	#raise NotImplementedError("Please Implement this method")
 
 @socketio.on('end game')

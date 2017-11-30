@@ -39,6 +39,8 @@
   </table>
 </script>
 {% endraw %}
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/js.cookie.min.js') }}"></script>
 <script>
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
   var socket = io.connect(serverUri);

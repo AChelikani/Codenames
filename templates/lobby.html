@@ -43,13 +43,17 @@ td {
     <table class="primary">
       <thead>
         <tr>
-          <th>Player</th>
+          <th></th>
+          <th></th>
           <th>Team</th>
           <th>Role</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="player in players" v-bind:key="player.avatar">
+          <td>
+            <img class="avatar" :src="avataruri + player.avatar + '.png'"></img>
+          </td>
           <td class="avatar-cell">
             <avatar :role="player.role" :team="player.team" />
           </td>
@@ -183,7 +187,8 @@ td {
       gameCode: gameCode,
       players: players,
       myplayers: [],
-      errors: errors
+      errors: errors,
+      avataruri: avatarUri
     },
     methods: {
       contains: function(id) {
@@ -235,7 +240,6 @@ td {
     data.players.forEach(function(player) {
       players.push(player);
     });
-    console.log(players);
   });
 
   socket.on(EVENT_START_GAME, function(data) {

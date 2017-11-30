@@ -1,5 +1,6 @@
 from codename_game import CodenameGame
 from codename_client import Client
+from codename_player import Player
 
 class GameManager(object):
     def __init__(self, game_code):
@@ -90,8 +91,11 @@ class GameManager(object):
         if client_id in self.clients:
             return self.get_active_client(client_id)
         client = self.dangling_clients.pop(client_id)
-        avatar = Client._get_avatar(self.used_avatars, pref=client.avatar)
-        client = client(client.id, client.team, client.role, avatar)
+        players = client.get_players().values()
+        for player in players:
+            avatar = Player._get_avatar(self.used_avatars, pref=player.avatar)
+            player = Player(player.id, player.team, player.role, avatar)
+            self.used_avatars.append(player.avatar)
         return self.add_client(client)
 
     # TODO: maybe there's a cleaner solution to this?
@@ -138,12 +142,12 @@ class GameManager(object):
         ''' Serializes players to JSON object. '''
         players = self.get_players()
         return {
-            'players': [p.serialize() for p in self.get_players().values()]
+            'players': [p.serialize() for p in players.values()]
         }
 
     def serialize_players_mapping(self):
         ''' Serializes playerid to player mapping to JSON object. '''
         players = self.get_players()
         return {
-            'players_mapping': [{'playerId': pId, 'player': p.serialize()} for pId, p in self.players.items()]
+            'players_mapping': [{'playerId': pId, 'player': p.serialize()} for pId, p in players.items()]
         }
