@@ -6,7 +6,7 @@ from game_store import game_store
 from keys import GAME_CODE_KEY, PLAYER_ID_KEY
 from utils import get_session_data
 from __main__ import socketio
-
+from codename_card import CardStatus
 
 game = Blueprint('game', __name__, template_folder='templates')
 
@@ -37,7 +37,7 @@ def game_data(game_code):
     else:
         return 'TODO: your player has been lost'
 
-
+    print player.role.value
     return render_template(
        'game.html',
        game_bundle=game_store.get_full_game_bundle(game_code_obj, player.role),
@@ -53,22 +53,43 @@ def player_turn(message):
     except ValueError as err:
         emit('error', str(err))
         return
+
     game_code = GameCode(game_code_raw)
     game_manager = game_store.get_game_bundle(game_code)
+    game = game_manager.get_game()
+
     player_id = session[PLAYER_ID_KEY]
     player = game_manager.get_player(player_id)
 
     if player.role == PlayerRole.SPYMASTER:
-        # data = stringified {"Clue" : clueword, "Num" : #guesses}
-        pass
+        # data = {"Clue" : clueword, "Num" : #guesses}
+        clue = message['Clue']
+        num_guesses = message['Num']
+
+        # TODO: Verification on clue and num_guesses
+
+        # Construct clue object and add to game state
+        game.set_current_clue(clue, num_guesses)
+
     else:
-        # data =
-        pass
+        # data = {"Word" : word}
+        guessed_word = message['Word']
+        card = game.get_card_by_word(guessed_word)
+        current_turn = game.current_turn
+
+        is_correct, card_status = game.make_guess(guessed_word)
+        if (is_correct):
+            # Proceed with turn
+        elif (card_status == CardStatus.BOMB):
+            # End game, bomb uncovered
+        else:
+            # Flip card, end turn
 
 
 @socketio.on('pause game')
-def player_pause_game(message):
-	raise NotImplementedError("Please Implement this method")
+def player_pause_game():
+    print "testing"
+	#raise NotImplementedError("Please Implement this method")
 
 @socketio.on('end game')
 def player_end_game(message):

@@ -75,12 +75,12 @@ class CodenameGame(object):
         if (self.current_turn == position_type):
             card.set_status(position_type)
             self.current_clue.number -= 1
-            return True
+            return (True, position_type)
         else:
             # Incorrect guess ends the turn
             card.set_status(position_type)
             self.current_clue.number = 0
-            return False
+            return (False, position_type)
 
     def switch_turns(self, word, number):
         ''' Swtich active turn to the other team '''
@@ -92,7 +92,7 @@ class CodenameGame(object):
 
     def is_game_over(self):
         ''' Check if the game is over by checking the counts of red and blue
-            and checking if the bomb was clicked. Game over condition is that 
+            and checking if the bomb was clicked. Game over condition is that
             red or blue meets their total possible or the bomb has been hit.
         '''
 
@@ -188,7 +188,7 @@ class LogEntryBuilder:
         self.side = None
         self.clue = None
 
-    # Tracking methods that store attribute in buffer.    
+    # Tracking methods that store attribute in buffer.
 
     def track_side(self, side):
         self.side = side

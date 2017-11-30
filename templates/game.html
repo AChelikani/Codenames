@@ -11,6 +11,9 @@
   <br/><br/>
   <board :data="map" :size="boardSize"></board>
   <br></br>
+  <input type="text" placeholder="Enter clue word here"> </input>
+  <input type="text" placeholder="Enter number of guesses here"> </input>
+  <button v-on:click="sendClue"> Submit </button>
 </div>
 {% endraw %}
 {% endblock %}
@@ -37,6 +40,9 @@
 </script>
 {% endraw %}
 <script>
+  var serverUri = location.protocol+'//'+document.domain+':'+location.port;
+  var socket = io.connect(serverUri);
+
   var playerRole = {{ player_role|tojson|safe }};
   var boardSize = {{ board_size|tojson|safe }};
   var gameBundle = {{ game_bundle|tojson|safe }};
@@ -76,6 +82,11 @@
       boardSize: boardSize,
       deck: gameBundle.deck,
       map: map
+    },
+    methods: {
+        sendClue: function(event) {
+            socket.emit('player turn')
+        }
     }
   });
 </script>
