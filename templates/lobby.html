@@ -7,13 +7,12 @@
 .th-red {
   background-color: #ff4136;
 }
+.avatar-cell {
+  display: flex;
+  justify-content: center;
+}
 td {
   padding-right: 1em;
-}
-td img {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
 }
 .error-text {
   color: red;
@@ -37,29 +36,47 @@ td img {
 {% endblock %}
 {% block content %}
 {% raw %}
-<div id="lobby">
+<div v-cloak id="lobby">
   <center>
     <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
     <h3>Teams</h3>
-    <div class="flex one two-800">
-      <div>
-        <team
-          :playerid="playerId"
-          :players="bluePlayers"
-          color="BLUE"
-          :avataruri="avatarUri"
-        ></team>
-      </div>
-      <div>
-        <team
-          :playerid="playerId"
-          :players="redPlayers"
-          color="RED"
-          :avataruri="avatarUri"
-        ></team>
-      </div>
-    </div>
-    <button class="success" v-on:click="switchTeams">Switch teams</button>
+    <table class="primary">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Team</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="player in players" v-bind:key="player.avatar">
+          <td class="avatar-cell">
+            <avatar :role="player.role" :team="player.team" />
+          </td>
+          <td>
+            <select v-if="contains(player.id)" class="table-content" style="width: 150px" v-on:change="switchTeam(player.id)" v-bind:value="player.team">
+              <option>Red</option>
+              <option>Blue</option>
+            </select>
+            <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.team">
+              <option>Red</option>
+              <option>Blue</option>
+            </select>
+          </td>
+          <td>
+            <select v-if="contains(player.id)" class="table-content" style="width: 150px" v-on:change="switchRole(player.id)" v-bind:value="player.role">
+              <option>Spymaster</option>
+              <option>Player</option>
+            </select>
+            <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
+              <option>Spymaster</option>
+              <option>Player</option>
+            </select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button v-on:click="addPlayer">Add player</button>
     <button class="warning" v-on:click="startGame">Start Game</button>
   </center>
   <div class="error-container">
@@ -96,17 +113,15 @@ td img {
           <td>
             <select style="width: 150px; visibility: hidden;"></select>
           </td>
-
         </tr>
       </template>
       <template v-else>
         <tr v-for="player in players" v-bind:key="player.avatar">
-          <td>
-            <img class="avatar" :src="avataruri + player.avatar + '.png'">
-            </img>
+          <td class="avatar-cell">
+            <avatar :role="player.role" :team="player.team" />
           </td>
           <td>
-            <select v-if="player.id === playerid" class="table-content" style="width: 150px" v-on:change="onChange" v-bind:value="player.role">
+            <select v-if="player.id === playerid" class="table-content" style="width: 150px" v-on:change="onChange(player.id)" v-bind:value="player.role">
               <option>Spymaster</option>
               <option>Player</option>
             </select>
@@ -121,6 +136,9 @@ td img {
   </table>
 </script>
 {% endraw %}
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/js.cookie.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/util.js') }}"></script>
 <script type="text/javascript" charset="utf-8">
   var COOKIE_ID = 'CN_ID';
   var EVENT_SWITCH_ROLE = {{ LobbyEvent.SWITCH_ROLE.value|tojson|safe }};
@@ -130,11 +148,14 @@ td img {
   var EVENT_SET_ID = {{ LobbyEvent.SET_ID.value|tojson|safe }};
   var EVENT_START_GAME = {{ LobbyEvent.START_GAME.value|tojson|safe }};
   var EVENT_INIT_START_GAME = {{ LobbyEvent.INIT_START_GAME.value|tojson|safe }};
+  var EVENT_ADD_PLAYER = {{ LobbyEvent.ADD_PLAYER.value|tojson|safe }};
+  var EVENT_RECEIVE_PLAYERS = {{ LobbyEvent.RECEIVE_PLAYERS.value|tojson|safe }};
 
   var avatarUri = {{ url_for('static', filename='img/avatar/')|tojson|safe }};
   var gameCode = {{ game_code|tojson|safe }};
   var players = [];
   var errors = [];
+  var deviceIcon = getDeviceIcon(navigator.userAgent);
 
   // Connect to the socket server
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
@@ -149,8 +170,8 @@ td img {
       avataruri: String
     },
     methods: {
-      onChange: function(value) {
-        socket.emit(EVENT_SWITCH_ROLE);
+      onChange: function(playerId) {
+        socket.emit(EVENT_SWITCH_ROLE, playerId);
       }
     }
   });
@@ -158,27 +179,30 @@ td img {
   var Lobby = new Vue({
     el: '#lobby',
     data: {
-      playerId: '',
       avatarUri: avatarUri,
       gameCode: gameCode,
       players: players,
+      myplayers: [],
       errors: errors
     },
-    computed: {
-      bluePlayers: function() {
-        return this.players.filter(function(player) {
-          return player.team === 'BLUE';
-        });
-      },
-      redPlayers: function() {
-        return this.players.filter(function(player) {
-          return player.team === 'RED'
-        });
-      }
-    },
     methods: {
-      switchTeams: function(event) {
-        socket.emit(EVENT_SWITCH_TEAM);
+      contains: function(id) {
+        var contains = false;
+        this.myplayers.forEach(function(player) {
+          if (player.id === id) {
+            contains = true;
+          }
+        });
+        return contains;
+      },
+      addPlayer: function() {
+        socket.emit(EVENT_ADD_PLAYER);
+      },
+      switchTeam: function(playerId) {
+        socket.emit(EVENT_SWITCH_TEAM, playerId);
+      },
+      switchRole: function(playerId) {
+        socket.emit(EVENT_SWITCH_ROLE, playerId);
       },
       startGame: function(event) {
         socket.emit(EVENT_INIT_START_GAME);
@@ -188,15 +212,18 @@ td img {
 
   // Handles the initial connection of the player
   socket.on('connect', function() {
-    var oldId = Cookies.get(COOKIE_ID);
-    socket.emit(EVENT_CONNECT, {
-      {{ old_id_key|tojson|safe }}: oldId
-    });
+    var cookie = Cookies.getJSON(COOKIE_ID);
+    socket.emit(EVENT_CONNECT, cookie);
   });
 
-  socket.on(EVENT_SET_ID, function(playerId) {
-    Lobby.playerId = playerId;
-    Cookies.set(COOKIE_ID, playerId);
+  socket.on(EVENT_SET_ID, function(cookie) {
+    Cookies.set(COOKIE_ID, cookie);
+    Lobby.myplayers = cookie.players;
+  });
+
+  socket.on(EVENT_RECEIVE_PLAYERS, function(cookie) {
+    Cookies.set(COOKIE_ID, cookie);
+    Lobby.myplayers = cookie.players;
   });
 
   // Handles initialization of lobby data
@@ -208,10 +235,11 @@ td img {
     data.players.forEach(function(player) {
       players.push(player);
     });
+    console.log(players);
   });
 
   socket.on(EVENT_START_GAME, function(data) {
-     window.location.replace(data);
+     window.location.href = data;
   });
 
   socket.on('error', function(error) {

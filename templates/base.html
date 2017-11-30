@@ -7,9 +7,24 @@
     {% endblock %}
     <title>Codenames</title>
     <style type="text/css">
+      /* used to cloak vue templates until they are rendered */
+      [v-cloak] {
+        display: none;
+      }
       .avatar {
-        width: 3.0em;
-        height: 3.0em;
+        width: 2.5em;
+        height: 2.5em;
+      }
+      .avatar-wrapper {
+        border-radius: 50%;
+        width: 2.5em;
+        height: 2.5em;
+      }
+      .avatar-blue {
+        background-color: #0074d9;
+      }
+      .avatar-red {
+        background-color: #ff4136;
       }
       .container {
         padding-top: 4em;
@@ -35,6 +50,35 @@
         background-color: #bbb;
       }
     </style>
+    <!-- https://materialdesignicons.com/ -->
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: none;">
+      <defs>
+        <g id="icon-spymaster">
+          <path d="M12,3C9.31,3 7.41,4.22 7.41,4.22L6,9H18L16.59,4.22C16.59,4.22 14.69,3 12,3M12,11C9.27,11 5.39,11.54 5.13,11.59C4.09,11.87 3.25,12.15 2.59,12.41C1.58,12.75 1,13 1,13H23C23,13 22.42,12.75 21.41,12.41C20.75,12.15 19.89,11.87 18.84,11.59C18.84,11.59 14.82,11 12,11M7.5,14A3.5,3.5 0 0,0 4,17.5A3.5,3.5 0 0,0 7.5,21A3.5,3.5 0 0,0 11,17.5C11,17.34 11,17.18 10.97,17.03C11.29,16.96 11.63,16.9 12,16.91C12.37,16.91 12.71,16.96 13.03,17.03C13,17.18 13,17.34 13,17.5A3.5,3.5 0 0,0 16.5,21A3.5,3.5 0 0,0 20,17.5A3.5,3.5 0 0,0 16.5,14C15.03,14 13.77,14.9 13.25,16.19C12.93,16.09 12.55,16 12,16C11.45,16 11.07,16.09 10.75,16.19C10.23,14.9 8.97,14 7.5,14M7.5,15A2.5,2.5 0 0,1 10,17.5A2.5,2.5 0 0,1 7.5,20A2.5,2.5 0 0,1 5,17.5A2.5,2.5 0 0,1 7.5,15M16.5,15A2.5,2.5 0 0,1 19,17.5A2.5,2.5 0 0,1 16.5,20A2.5,2.5 0 0,1 14,17.5A2.5,2.5 0 0,1 16.5,15Z" />
+        </g>
+        <g id="icon-player">
+          <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+        </g>
+        <g id="icon-android">
+          <path d="M17.25,18H6.75V4H17.25M14,21H10V20H14M16,1H8A3,3 0 0,0 5,4V20A3,3 0 0,0 8,23H16A3,3 0 0,0 19,20V4A3,3 0 0,0 16,1Z" />
+        </g>
+        <g id="icon-iphone">
+          <path d="M16,18H7V4H16M11.5,22A1.5,1.5 0 0,1 10,20.5A1.5,1.5 0 0,1 11.5,19A1.5,1.5 0 0,1 13,20.5A1.5,1.5 0 0,1 11.5,22M15.5,1H7.5A2.5,2.5 0 0,0 5,3.5V20.5A2.5,2.5 0 0,0 7.5,23H15.5A2.5,2.5 0 0,0 18,20.5V3.5A2.5,2.5 0 0,0 15.5,1Z" />
+        </g>
+        <g id="icon-desktop">
+          <path d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z" />
+        </g>
+        <g id="icon-laptop">
+          <path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" />
+        </g>
+        <g id="icon-ipad">
+          <path d="M19,19H4V3H19M11.5,23A1.5,1.5 0 0,1 10,21.5A1.5,1.5 0 0,1 11.5,20A1.5,1.5 0 0,1 13,21.5A1.5,1.5 0 0,1 11.5,23M18.5,0H4.5A2.5,2.5 0 0,0 2,2.5V21.5A2.5,2.5 0 0,0 4.5,24H18.5A2.5,2.5 0 0,0 21,21.5V2.5A2.5,2.5 0 0,0 18.5,0Z" />
+        </g>
+        <g id="icon-tablet">
+          <path d="M19.25,19H4.75V3H19.25M14,22H10V21H14M18,0H6A3,3 0 0,0 3,3V21A3,3 0 0,0 6,24H18A3,3 0 0,0 21,21V3A3,3 0 0,0 18,0Z" />
+        </g>
+      </defs>
+    </svg>
   </head>
   <body>
     {% include 'header.html' %}
@@ -42,12 +86,36 @@
       {% block content %}
       {% endblock %}
     </div>
-    <script src="{{ url_for('static', filename='js/test.js') }}"></script>
-    {# <script src="https://unpkg.com/vue"></script> #}
     <script src="{{ url_for('static', filename='js/vue.dev.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/js.cookie.min.js') }}"></script>
-
+    <script type="text/x-template" id="svg-template">
+      <svg viewBox="0 0 24 24" :class="className" :width="width" :height="height" :fill="fill">
+          <use :xlink:href="icon" />
+      </svg>
+    </script>
+    <script type="text/x-template" id="avatar-template">
+      <div class="avatar-wrapper" v-bind:class="{
+        'avatar-blue': team === 'Blue',
+        'avatar-red': team === 'Red' }">
+        <svg-icon v-if="role === 'Spymaster'" className="avatar" icon="#icon-spymaster" fill="white" />
+        <svg-icon v-if="role === 'Player'" className="avatar" icon="#icon-player" fill="white" />
+      </div>
+    </script>
+    <script>
+      Vue.component('svg-icon', {
+        template: '#svg-template',
+        props: ['className', 'width', 'height', 'fill', 'icon']
+      });
+      Vue.component('avatar', {
+        template: '#avatar-template',
+        props: ['role', 'team']
+      });
+    </script>
+    <script>
+      Vue.component('svg-icon', {
+        template: '#svg-template',
+        props: ['className', 'width', 'height', 'fill', 'icon']
+      });
+    </script>
     {% block scripts %}
     {% endblock %}
   </body>

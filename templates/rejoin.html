@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+  <center>
+    <h1>You've been disconnected!</h1>
+    <h2>Enter the reconnection code</h2>
+    <div style="width: 250px">
+      <form action="/add_to_lobby/" method="post">
+        <input name="game_code" type="text" placeholder="Game code">
+        <button type="submit">Reconnect</button>
+      </form>
+    </div>
+    {% if error_text %}
+    <h3> {{ error_text }} </h3>
+    {% endif %}
+  </center>
+</div>
+{% endblock %}

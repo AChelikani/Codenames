@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, session, url_for
 from config import global_config as config
 from game_code import GameCode
 from game_store import game_store
-from keys import GAME_CODE_KEY, PLAYER_ID_KEY
+from constants import GAME_CODE_KEY, CLIENT_ID_KEY
 from utils import get_session_data
 from __main__ import socketio
 from codename_card import CardStatus
@@ -22,22 +22,22 @@ def game_data(game_code):
     game_code_obj = GameCode(game_code)
     if not game_store.contains_game(game_code_obj):
         # TODO error handling
-        return 'TODO: game store doesn\'t have game code (uh oh)'
+        return render_template('rejoin.html')
+    game_manager = game_store.get_game(game_code_obj)
 
     if PLAYER_ID_KEY not in session:
-        return 'TODO: You do not have a player id, probably cause you haven\'t lobbied up!'
+        return render_template('rejoin.html')
 
     player_id = session[PLAYER_ID_KEY]
 
-    if game_store.does_player_exist(game_code_obj, player_id):
-        game_manager = game_store.get_game(game_code_obj)
+    if game_manager.has_active_player(player_id):
         player = game_manager.get_player(player_id)
-    elif game_store.is_player_dangling(game_code_obj, player_id):
-        player = game_store.restore_player(game_code_obj, player_id)
+    elif game_manager.has_dangling_player(player_id):
+        player = game_manager.restore_player(player_id)
     else:
-        return 'TODO: your player has been lost'
+        # TODO: redirect to lobby if game hasn't started
+        return render_template('rejoin.html')
 
-    print player.role.value
     return render_template(
        'game.html',
        game_bundle=game_store.get_full_game_bundle(game_code_obj, player.role),

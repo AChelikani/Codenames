@@ -52,6 +52,10 @@ def how_to_play():
 def favicon():
     return send_from_directory(url_for('static', 'img/icons/question_mark_icon.ico'))
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
 # TODO: add config for port,
 if __name__ == "__main__":
     socketio.run(app)

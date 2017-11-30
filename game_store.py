@@ -11,8 +11,6 @@ class ActiveGameStore:
 	def __init__(self):
 		# Mapping of active game codes to game managers.
 		self.active_games = {} # Dict[GameCode, GameManager]
-		# TODO: with session this might be deprecated
-		self.player_games = {} # Dict[str(PlayerId), GameCode]
 
 	def create_game(self, game_code_option = None):
 		''' Wrapper method for creating new game, and adding to game_store.
@@ -38,40 +36,27 @@ class ActiveGameStore:
 		''' Checks if active game store contains given game code. '''
 		return game_code in self.active_games
 
-	def contains_player(self, player_id):
-		''' Checks if active game store contains given player id. '''
-		return player_id in self.player_games
-
 	def update_game(self, game_code, new_game):
 		''' Overrides stored game at given game code with new provided game. '''
 		self.active_games[game_code] = new_game
 
-	def remove_player(self, player_id, game_code):
-		''' Removes player from corresponding game manager AND player id to game mapping. '''
+	def remove_client(self, client_id, game_code):
+		''' Removes client from corresponding game manager. '''
 		game_manager = self.get_game(game_code)
-		player = game_manager.remove_player(player_id)
-		del self.player_games[player_id]
-		return player
+		client = game_manager.remove_client(client_id)
+		return client
 
-	def add_player(self, game_code):
-		''' Adds player to specified game, AND updates player id to game mapping. '''
-		if game_code not in self.active_games:
-			raise ValueError("%s not found in game store" % str(game_code))
-		new_player = self.active_games[game_code].add_new_player()
-		self.player_games[new_player.id] = game_code
-		return new_player
+	def add_new_client(self, game_code):
+		''' Adds client to specified game. '''
+		game_manager = self.get_game(game_code)
+		new_client = game_manager.add_new_client()
+		return new_client
 
 	def get_game(self, game_code):
 		''' Returns specified game by game code.'''
 		if game_code not in self.active_games:
 			raise ValueError("%s not found in game store" % str(game_code))
 		return self.active_games[game_code]
-
-	def get_game_code(self, player_id):
-		''' Returns specified game code by player id. '''
-		if player_id not in self.player_games:
-			raise ValueError("%s not found in game store" % player_id)
-		return self.player_games[player_id]
 
 	def get_game_bundle(self, game_code):
 		'''	Returns JSON bundle of all dynamic game information
@@ -117,26 +102,12 @@ class ActiveGameStore:
 		''' Returns in-memory list of all active game codes. '''
 		return [game_code.serialize() for game_code in self.active_games.keys()]
 
-	def does_player_exist(self, game_code, player_id):
-		''' Checks if specified player exists in specified game. '''
-		game_manager = self.get_game(game_code)
-		return player_id in game_manager.get_players()
-
-	def is_player_dangling(self, game_code, player_id):
-		''' Checks if player had previously disconnected from game. '''
-		game_manager = self.get_game(game_code)
-		return player_id in game_manager.get_dangling_players()
-
-	def restore_player(self, game_code, player_id):
-		''' Restores player to active player list in game. '''
-		game_manager = self.get_game(game_code)
-		assert(player_id in game_manager.get_dangling_players())
-		self.player_games[player_id] = game_code
-		return game_manager.restore_player(player_id)
-
 	def get_lobby_bundle(self, game_code):
 		''' Gets JSON "lobby bundle" of all active players in game. '''
 		game_manager = self.get_game(game_code)
-		return game_manager.serialize_players()
+		lobby_bundle = game_manager.serialize_players()
+		# JSONUtils.merge_in_place(lobby_bundle, '')
+		return lobby_bundle
+
 
 game_store = ActiveGameStore()

@@ -1,5 +1,5 @@
 from copy import deepcopy
-from keys import GAME_CODE_KEY, PLAYER_ID_KEY
+from constants import GAME_CODE_KEY, CLIENT_ID_KEY
 
 
 class JSONUtils:
@@ -44,10 +44,10 @@ def get_session_data(session):
     if GAME_CODE_KEY not in session:
         err_msg = 'Game session not found! Maybe it has ended or been deleted!'
         raise ValueError(err_msg)
-    if PLAYER_ID_KEY not in session:
+    if CLIENT_ID_KEY not in session:
         err_msg = """It looks like your session ended unexpectedly, please
                      refresh the page."""
         raise ValueError(err_msg)
     game_code = session[GAME_CODE_KEY]
-    player_id = session[PLAYER_ID_KEY]
-    return game_code, player_id
+    client_id = session[CLIENT_ID_KEY]
+    return game_code, client_id

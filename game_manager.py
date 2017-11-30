@@ -1,5 +1,5 @@
 from codename_game import CodenameGame
-from codename_player import Player, PlayerTeam, PlayerRole
+from codename_client import Client
 
 class GameManager(object):
     def __init__(self, game_code):
@@ -7,73 +7,126 @@ class GameManager(object):
         self.game_code = game_code
         # Generated codename game.
         self.game = CodenameGame()
-        # Active players of game.
-        self.players = {}
-        # Disconnected players of game (for in case they come back).
-        self.dangling_players = {}
-        # Avatars being used for players.
+        # Active clients of game.
+        self.clients = {}
+        # Disconnected clients of game (for in case they come back).
+        self.dangling_clients = {}
+        # Avatars being used for clients.
         self.used_avatars = []
 
-    def get_num_players(self):
-        ''' Returns number of active players. '''
-        return len(self.players)
+    def get_client(self, client_id):
+        ''' Returns an active client if it exists '''
+        if client_id not in self.clients:
+            ValueError('Client does not exist for id %s' % client_id)
+        return self.clients[client_id]
 
-    def add_player(self, player):
-        ''' Adds new player to active players and tracks avatar'''
-        self.players[player.id] = player
-        self.used_avatars.append(player.avatar)
-        return player
+    def get_num_clients(self):
+        ''' Returns number of active clients. '''
+        return len(self.clients)
 
-    def add_new_player(self):
-        ''' Creates new player and adds it. '''
-        new_player = Player.new_player(self.used_avatars)
-        self.add_player(new_player)
+    def add_client(self, client):
+        ''' Adds new client to a client and tracks avatar'''
+        self.clients[client.id] = client
+        players = client.get_players().values()
+        for player in players:
+            self.used_avatars.append(player.avatar)
+        return client
+
+    def add_new_player(self, client_id):
+        client = self.get_client(client_id)
+        new_player = client.add_new_player(self.used_avatars)
+        self.used_avatars.append(new_player.avatar)
         return new_player
 
-    def remove_player(self, player_id):
-        ''' Removes player from active players'''
-        player = self.players.pop(player_id, None)
-        self.used_avatars.remove(player.avatar)
-        self.dangling_players[player_id] = player
-        return player
+    def add_new_client(self):
+        ''' Creates new client and adds it. '''
+        new_client = Client.new_client()
+        self.add_client(new_client)
+        return new_client
 
-    def get_players(self):
-        ''' Returns active player id to player mapping. '''
-        return self.players
+    def remove_client(self, client_id):
+        ''' Removes client from active clients'''
+        client = self.clients.pop(client_id, None)
+        players = client.get_players().values()
+        for player in players:
+            self.used_avatars.remove(player.avatar)
+        self.dangling_clients[client_id] = client
+        return client
 
-    def get_player(self, player_id):
-        ''' Returns corresponding active player if exists else None '''
-        if player_id in self.players:
-            return self.players[player_id]
+    def get_clients(self):
+        ''' Returns active client id to client mapping. '''
+        return self.clients
+
+    def has_active_client(self, client_id):
+        ''' Returns whether the corresponding active client exists or not '''
+        return client_id in self.clients
+
+    def has_dangling_client(self, client_id):
+        ''' Returns whether the corresponding dangling client exists or not '''
+        return client_id in self.dangling_clients
+
+    def get_active_client(self, client_id):
+        ''' Returns corresponding active client if exists else None '''
+        if client_id in self.clients:
+            return self.clients[client_id]
         return None
 
-    def get_dangling_players(self):
-        ''' Returns disconnectd player id to player mapping. '''
-        return self.dangling_players
+    def get_dangling_client(self, client_id):
+        ''' Returns corresponding dangling client if exists else None '''
+        if client_id in self.dangling_clients:
+            return self.dangling_clients[client_id]
+        return None
 
-    def restore_player(self, player_id):
-        ''' Restores disconnected player to active player mapping. '''
-        player = self.dangling_players.pop(player_id)
-        avatar = Player._get_avatar(self.used_avatars, pref=player.avatar)
-        player = Player(player.id, player.team, player.role, avatar)
-        return self.add_player(player)
+    def has_client(self, client_id):
+        ''' Returns True if client_id is in clients or dangling_clients '''
+        return client_id in self.clients or client_id in self.dangling_clients
 
-    def switch_player_team(self, player_id):
-        ''' Switches player team (RED/BLUE). '''
-        if player_id not in self.players:
-            raise ValueError("player id %s not found in players" % player_id)
-        player = self.players[player_id]
-        player.team = PlayerTeam.BLUE if player.team == PlayerTeam.RED else PlayerTeam.RED
-        return
+    def get_dangling_clients(self):
+        ''' Returns disconnectd client id to client mapping. '''
+        return self.dangling_clients
 
-    def switch_player_role(self, player_id):
-        ''' Switches player role (PLAYER/SPYMASTER). '''
-        player = self.players[player_id]
-        player.role = PlayerRole.SPYMASTER if player.role == PlayerRole.PLAYER else PlayerRole.PLAYER
+    def restore_client(self, client_id):
+        ''' Restores disconnected client to active client mapping. '''
+        if client_id in self.clients:
+            return self.get_active_client(client_id)
+        client = self.dangling_clients.pop(client_id)
+        avatar = Client._get_avatar(self.used_avatars, pref=client.avatar)
+        client = client(client.id, client.team, client.role, avatar)
+        return self.add_client(client)
+
+    # TODO: maybe there's a cleaner solution to this?
+    def get_players(self):
+        players = {}
+        for client in self.clients.values():
+            client_players = client.get_players()
+            players = dict(players, **client_players)
+        return players
 
     def get_game(self):
         ''' Returns contained CodenamesGame object. '''
         return self.game
+
+    def client_has_player(self, client_id, player_id):
+        client = self.get_client(client_id)
+        return client.has_player(player_id)
+
+
+    def switch_player_team(self, client_id, player_id):
+        client = self.get_client(client_id)
+        client.switch_player_team(player_id)
+        return
+
+    def switch_player_role(self, client_id, player_id):
+        client = self.get_client(client_id)
+        client.switch_player_role(player_id)
+        return
+
+    def get_client_cookie(self, client_id):
+        client = self.get_client(client_id)
+        return {
+            'client_id': client_id,
+        	'players': [p.serialize() for p in client.get_players().values()]
+		}
 
     def serialize_game(self):
         ''' Serializes contained game to JSON object along with game code. '''
@@ -83,12 +136,14 @@ class GameManager(object):
 
     def serialize_players(self):
         ''' Serializes players to JSON object. '''
+        players = self.get_players()
         return {
             'players': [p.serialize() for p in self.get_players().values()]
         }
 
     def serialize_players_mapping(self):
         ''' Serializes playerid to player mapping to JSON object. '''
+        players = self.get_players()
         return {
             'players_mapping': [{'playerId': pId, 'player': p.serialize()} for pId, p in self.players.items()]
         }

@@ -4,8 +4,8 @@ from random import choice
 from uuid import uuid4
 
 class PlayerTeam(Enum):
-    BLUE = 'BLUE'
-    RED = 'RED'
+    BLUE = 'Blue'
+    RED = 'Red'
 
 class PlayerRole(Enum):
     SPYMASTER = 'Spymaster'
