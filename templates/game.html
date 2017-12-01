@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
 {% block head %}
 <style type="text/css">
+.word {
+  cursor: pointer;
+}
 </style>
 {% endblock %}
 {% block content %}
@@ -25,7 +28,7 @@
     <tbody>
       <tr v-for="row in boardData">
         <td v-for="col in row">
-          <span v-bind:class="{
+          <span v-on:click="chooseWord(col.word)" class="word" v-bind:class="{
             red: col.status === 'RED',
             blue: col.status === 'BLUE',
             neutral: col.status === 'NEUTRAL',
@@ -42,6 +45,7 @@
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/js.cookie.min.js') }}"></script>
 <script>
+  var EVENT_CHOOSE_WORD = {{ GameEvent.CHOOSE_WORD.value|tojson|safe }};
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
   var socket = io.connect(serverUri);
 
@@ -74,6 +78,11 @@
         while (data.length) boardData.push(data.splice(0, rowSize));
         return boardData;
       }
+    },
+    methods: {
+      chooseWord: function(word) {
+        socket.emit(EVENT_CHOOSE_WORD, word);
+      }
     }
   });
 
@@ -86,9 +95,9 @@
       map: map
     },
     methods: {
-        sendClue: function(event) {
-            socket.emit('player turn')
-        }
+      sendClue: function(event) {
+        socket.emit('player turn')
+      }
     }
   });
 </script>

@@ -14,6 +14,7 @@ class GameEvent(Enum):
     TURN = 'game_turn'
     STOP = 'game_stop'
     PAUSE = 'game_pause'
+    CHOOSE_WORD = 'choose_word'
 
 
 # TODO this whole route
@@ -45,6 +46,7 @@ def game_data(game_code):
        game_bundle=game_store.get_full_game_bundle(game_code_obj, player.role),
        player_role=player.role.value,
        board_size=config.getNumCards(),
+       GameEvent=GameEvent,
    )
 
 
@@ -91,6 +93,29 @@ def player_turn(message):
         else:
             # Flip card, end turn
             pass
+
+
+@socketio.on(GameEvent.CHOOSE_WORD.value)
+def choose_word(word):
+    try:
+        game_code_raw, client_id = get_session_data(session)
+    except ValueError as err:
+        emit('error', str(err))
+        return
+    game_code = GameCode(game_code_raw)
+    if not game_store.contains_game(game_code):
+        ErrorHandler.game_code_dne(GameEvent.CHOOSE_WORD, game_code)
+        return
+    game_manager = game_store.get_game(game_code)
+
+    # Validate that the event comes from the client possessing the player whose
+    # turn it is.
+
+    # Perform game logic with word choice
+
+    # Change player turn
+
+    # Propagate changes to other clients
 
 
 @socketio.on('pause game')
