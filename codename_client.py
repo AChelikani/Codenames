@@ -28,8 +28,8 @@ class Client(object):
         self.players[player.id] = player
         return player
 
-    def remove_player(self, client_id):
-        ''' Removes player from active players'''
+    def remove_player(self, player_id):
+        ''' Removes player from client'''
         player = self.players.pop(player_id, None)
         return player
 
@@ -56,9 +56,9 @@ class Client(object):
         return
 
     def switch_player_role(self, player_id):
-        ''' Switches player role (PLAYER/SPYMASTER). '''
+        ''' Switches player role (OPERATIVE/SPYMASTER). '''
         player = self.players[player_id]
-        player.role = PlayerRole.SPYMASTER if player.role == PlayerRole.PLAYER else PlayerRole.PLAYER
+        player.role = PlayerRole.SPYMASTER if player.role == PlayerRole.OPERATIVE else PlayerRole.OPERATIVE
 
     def serialize_players(self):
         ''' Serializes players to JSON object. '''

@@ -9,7 +9,7 @@ class PlayerTeam(Enum):
 
 class PlayerRole(Enum):
     SPYMASTER = 'Spymaster'
-    PLAYER = 'Player'
+    OPERATIVE = 'Operative'
 
 class Player(object):
 

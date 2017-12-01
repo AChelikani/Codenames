@@ -125,6 +125,12 @@ class GameManager(object):
         client.switch_player_role(player_id)
         return
 
+    def delete_player(self, client_id, player_id):
+        client = self.get_client(client_id)
+        player = client.remove_player(player_id)
+        self.used_avatars.remove(player.avatar)
+        return
+
     def get_client_cookie(self, client_id):
         client = self.get_client(client_id)
         return {

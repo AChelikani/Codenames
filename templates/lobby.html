@@ -1,37 +1,22 @@
 {% extends 'base.html' %}
 {% block head %}
 <style type="text/css">
-.th-blue {
-  background-color: #0074d9;
-}
-.th-red {
-  background-color: #ff4136;
-}
+.th-blue { background-color: #0074d9; }
+.th-red { background-color: #ff4136; }
 .avatar-cell {
   display: flex;
   justify-content: center;
 }
-td {
-  padding-right: 1em;
-}
-.error-text {
-  color: red;
-}
-.error-container {
-  width: 595px;
-}
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .5s;
-}
-.fade-enter, .fade-leave-to {
-  opacity: 0;
-}
-.list-enter-active, .list-leave-active {
-  transition: opacity .5s;
-}
-.list-enter, .list-leave-to {
-  opacity: 0;
-}
+td { padding-right: 1em; }
+.log-error { color: red; }
+.log-warn { color: #ff851b; }
+.log-info { color: #ADA4A4 }
+.log-container { width: 595px; }
+.delete { cursor: pointer; }
+.fade-enter-active, .fade-leave-active { transition: opacity .5s; }
+.fade-enter, .fade-leave-to { opacity: 0; }
+.list-enter-active, .list-leave-active { transition: opacity .5s; }
+.list-enter, .list-leave-to { opacity: 0; }
 </style>
 {% endblock %}
 {% block content %}
@@ -39,14 +24,10 @@ td {
 <div v-cloak id="lobby">
   <center>
     <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
-    <h3>Teams</h3>
     <table class="primary">
       <thead>
         <tr>
-          <th></th>
-          <th></th>
-          <th>Team</th>
-          <th>Role</th>
+          <th></th><th></th><th>Team</th><th>Role</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -70,76 +51,47 @@ td {
           <td>
             <select v-if="contains(player.id)" class="table-content" style="width: 150px" v-on:change="switchRole(player.id)" v-bind:value="player.role">
               <option>Spymaster</option>
-              <option>Player</option>
+              <option>Operative</option>
             </select>
             <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
               <option>Spymaster</option>
-              <option>Player</option>
+              <option>Operative</option>
             </select>
+          </td>
+          <td>
+            <span class="delete" v-on:click="deletePlayer(player.id)">
+              <svg-icon icon="#icon-delete" width="20" height="20"/>
+            </span>
           </td>
         </tr>
       </tbody>
     </table>
     <button v-on:click="addPlayer">Add player</button>
     <button class="warning" v-on:click="startGame">Start Game</button>
+    <div class="log-container">
+      <transition-group name="list" tag="p">
+        <p v-for="event in log" v-bind:key="event.msg" v-bind:class="{
+          'log-error': event.type === 'error',
+          'log-warn': event.type === 'warn',
+          'log-info': event.type === 'info'
+        }">
+          <template v-if="event.type === 'error'">
+            {{ "Error: " + event.msg }}
+          </template>
+          <template v-if="event.type === 'warn'">
+            {{ "Warning: " + event.msg }}
+          </template>
+          <template v-if="event.type === 'info'">
+            {{ event.msg }}
+          </template>
+        </p>
+      </transition-group>
+    </div>
   </center>
-  <div class="error-container">
-    <transition-group name="list" tag="p">
-      <p v-for="error in errors" class="error-text" v-bind:key="error">
-        {{ "Error: " + error }}
-      </p>
-    </transition-group>
-  </div>
 </div>
 {% endraw %}
 {% endblock %}
 {% block scripts %}
-{% raw %}
-<script type="text/x-template" id="team-template">
-  <table class="primary">
-    <thead>
-      <tr>
-        <th v-bind:class="{
-          'th-blue': color === 'BLUE',
-          'th-red': color === 'RED',
-        }">Player</th>
-        <th v-bind:class="{
-          'th-blue': color === 'BLUE',
-          'th-red': color === 'RED',
-        }">Role</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Empty item to maintain the table width if there are no items -->
-      <template v-if="players.length === 0">
-        <tr>
-          <td></td>
-          <td>
-            <select style="width: 150px; visibility: hidden;"></select>
-          </td>
-        </tr>
-      </template>
-      <template v-else>
-        <tr v-for="player in players" v-bind:key="player.avatar">
-          <td class="avatar-cell">
-            <avatar :role="player.role" :team="player.team" />
-          </td>
-          <td>
-            <select v-if="player.id === playerid" class="table-content" style="width: 150px" v-on:change="onChange(player.id)" v-bind:value="player.role">
-              <option>Spymaster</option>
-              <option>Player</option>
-            </select>
-            <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
-              <option>Spymaster</option>
-              <option>Player</option>
-            </select>
-          </td>
-        </tr>
-      </template>
-    </tbody>
-  </table>
-</script>
-{% endraw %}
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/js.cookie.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/util.js') }}"></script>
@@ -153,12 +105,13 @@ td {
   var EVENT_START_GAME = {{ LobbyEvent.START_GAME.value|tojson|safe }};
   var EVENT_INIT_START_GAME = {{ LobbyEvent.INIT_START_GAME.value|tojson|safe }};
   var EVENT_ADD_PLAYER = {{ LobbyEvent.ADD_PLAYER.value|tojson|safe }};
+  var EVENT_DELETE_PLAYER = {{ LobbyEvent.DELETE_PLAYER.value|tojson|safe }};
   var EVENT_RECEIVE_PLAYERS = {{ LobbyEvent.RECEIVE_PLAYERS.value|tojson|safe }};
 
   var avatarUri = {{ url_for('static', filename='img/avatar/')|tojson|safe }};
   var gameCode = {{ game_code|tojson|safe }};
   var players = [];
-  var errors = [];
+  var log = [];
   var deviceIcon = getDeviceIcon(navigator.userAgent);
 
   // Connect to the socket server
@@ -187,7 +140,7 @@ td {
       gameCode: gameCode,
       players: players,
       myplayers: [],
-      errors: errors,
+      log: log,
       avataruri: avatarUri
     },
     methods: {
@@ -202,6 +155,9 @@ td {
       },
       addPlayer: function() {
         socket.emit(EVENT_ADD_PLAYER);
+      },
+      deletePlayer: function(playerId) {
+        socket.emit(EVENT_DELETE_PLAYER, playerId);
       },
       switchTeam: function(playerId) {
         socket.emit(EVENT_SWITCH_TEAM, playerId);
@@ -246,11 +202,42 @@ td {
      window.location.href = data;
   });
 
-  socket.on('error', function(error) {
-    errors.push(error);
+  function logMsg(type, msg) {
+    log.push({
+      type: type,
+      msg: msg
+    });
     setTimeout(function() {
-      errors.shift();
+      log.shift();
     }, 10000);
+  }
+
+  socket.on('connect_error', function(error) {
+    logMsg('error', 'Could not connect to socket server.');
+  });
+
+  socket.on('connect_timeout', function() {
+    logMsg('error', 'Connection timed out.');
+  });
+
+  socket.on('reconnect', function(n) {
+    logMsg('info', 'Reconnected.');
+  });
+
+  socket.on('reconnect_error', function(error) {
+    logMsg('error', 'Could not reconnect');
+  });
+
+  socket.on('reconnect_failed', function(error) {
+    logMsg('error', 'Could not reconnect');
+  });
+
+  socket.on('error', function(error) {
+    if (typeof error !== 'string') {
+      console.log(error);
+    } else {
+      logMsg('error', error);
+    }
   });
 
 </script>

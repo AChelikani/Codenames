@@ -20,6 +20,7 @@ class LobbyEvent(Enum):
     INIT_START_GAME = 'lobby_init_start_game'
     START_GAME = 'lobby_start_game'
     ADD_PLAYER = 'add_player'
+    DELETE_PLAYER = 'delete_player'
     RECEIVE_PLAYERS = 'receive_players'
 
 
@@ -103,6 +104,26 @@ def add_player():
     lobby_bundle = game_store.get_lobby_bundle(game_code)
     emit(LobbyEvent.UPDATE.value, lobby_bundle, room=game_code, broadcast=True)
 
+@socketio.on(LobbyEvent.DELETE_PLAYER.value)
+def delete_player(player_id):
+    try:
+        game_code_raw, client_id = get_session_data(session)
+    except ValueError as err:
+        emit('error', str(err))
+        return
+    game_code = GameCode(game_code_raw)
+    if not game_store.contains_game(game_code):
+        ErrorHandler.game_code_dne(LobbyEvent.SWITCH_TEAM, game_code)
+        return
+    game_manager = game_store.get_game(game_code)
+    if not game_manager.client_has_player(client_id, player_id):
+        emit('error', 'You cannot change that player')
+        return
+    game_manager.delete_player(client_id, player_id)
+    cookie = game_manager.get_client_cookie(client_id)
+    emit(LobbyEvent.RECEIVE_PLAYERS.value, cookie)
+    lobby_bundle = game_store.get_lobby_bundle(game_code)
+    emit(LobbyEvent.UPDATE.value, lobby_bundle, room=game_code, broadcast=True)
 
 @socketio.on(LobbyEvent.SWITCH_TEAM.value)
 def player_switch_team(player_id):
