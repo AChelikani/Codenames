@@ -15,6 +15,7 @@ cd ../
 virtualenv Codenames
 cd Codenames
 
+source bin/activate
 pip3 install -r requirements.txt
 
 # install flake8's git hook
