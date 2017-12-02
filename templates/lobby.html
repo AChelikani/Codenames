@@ -17,6 +17,7 @@ td { padding-right: 1em; }
 .fade-enter, .fade-leave-to { opacity: 0; }
 .list-enter-active, .list-leave-active { transition: opacity .5s; }
 .list-enter, .list-leave-to { opacity: 0; }
+.lobby-table { width: 555px;  }
 </style>
 {% endblock %}
 {% block content %}
@@ -24,8 +25,12 @@ td { padding-right: 1em; }
 <div v-cloak id="lobby">
   <center>
     <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
+<<<<<<< HEAD
     <p class="log-error">{{ errorMessage }}</p>
     <table class="primary">
+=======
+    <table class="primary lobby-table">
+>>>>>>> Lobby delete UI tweaks
       <thead>
         <tr>
           <th></th><th></th><th>Team</th><th>Role</th><th></th>
@@ -60,9 +65,13 @@ td { padding-right: 1em; }
             </select>
           </td>
           <td>
-            <span class="delete" v-on:click="deletePlayer(player.id)">
-              <svg-icon icon="#icon-delete" width="20" height="20"/>
-            </span>
+            <a v-on:click="deletePlayer(player.id)" v-bind:class="{
+              delete: contains(player.id)
+            }">
+              <span>
+                <svg-icon icon="#icon-delete" width="20" height="20"/>
+              </span>
+            </a>
           </td>
         </tr>
       </tbody>
@@ -161,7 +170,11 @@ td { padding-right: 1em; }
         socket.emit(EVENT_ADD_PLAYER);
       },
       deletePlayer: function(playerId) {
-        socket.emit(EVENT_DELETE_PLAYER, playerId);
+        this.myplayers.forEach(function(player) {
+          if (player.id === playerId) {
+            socket.emit(EVENT_DELETE_PLAYER, playerId);
+          }
+        });
       },
       switchTeam: function(playerId) {
         socket.emit(EVENT_SWITCH_TEAM, playerId);
