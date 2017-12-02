@@ -11,7 +11,7 @@ if ! [ -x "$(command -v virtualenv)" ]; then
 fi
 
 # set up the virtualenv
-cd ../
+cd ../../
 virtualenv Codenames
 cd Codenames
 
