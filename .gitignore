@@ -4,3 +4,6 @@
 pip-selfcheck.json
 *.pyc
 flask_session/
+Scripts/
+tcl/
+.vscode/

@@ -50,7 +50,7 @@ def how_to_play():
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(url_for('static', 'img/icons/question_mark_icon.ico'))
+    return send_from_directory('static', 'img/icons/question_mark_icon.ico')
 
 @app.errorhandler(404)
 def page_not_found(e):

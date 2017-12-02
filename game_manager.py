@@ -1,6 +1,16 @@
 from codename_game import CodenameGame
 from codename_client import Client
-from codename_player import Player
+from codename_player import *
+from utils import JSONUtils
+
+class PlayerConfigError(Enum):
+    NONE = ''
+    NO_RED_TEAM = 'Add a red team to get started.'
+    NO_RED_SPYMASTER = 'Red team is missing a spymaster.'
+    NO_RED_OPERATIVE = 'Red team is missing an operative.'
+    NO_BLUE_TEAM = 'Add a blue team to get started.'
+    NO_BLUE_SPYMASTER = 'Blue team is missing a spymaster.'
+    NO_BLUE_OPERATIVE = 'Blue team is missing an operative.'    
 
 class GameManager(object):
     def __init__(self, game_code):
@@ -16,7 +26,7 @@ class GameManager(object):
         self.used_avatars = []
 
     def get_client(self, client_id):
-        ''' Returns an active client if it exists '''
+        ''' Returns an active client if it exists. '''
         if client_id not in self.clients:
             ValueError('Client does not exist for id %s' % client_id)
         return self.clients[client_id]
@@ -26,7 +36,7 @@ class GameManager(object):
         return len(self.clients)
 
     def add_client(self, client):
-        ''' Adds new client to a client and tracks avatar'''
+        ''' Adds new client to a client and tracks avatar. '''
         self.clients[client.id] = client
         players = client.get_players().values()
         for player in players:
@@ -46,7 +56,7 @@ class GameManager(object):
         return new_client
 
     def remove_client(self, client_id):
-        ''' Removes client from active clients'''
+        ''' Removes client from active clients. '''
         client = self.clients.pop(client_id, None)
         players = client.get_players().values()
         for player in players:
@@ -59,27 +69,27 @@ class GameManager(object):
         return self.clients
 
     def has_active_client(self, client_id):
-        ''' Returns whether the corresponding active client exists or not '''
+        ''' Returns whether the corresponding active client exists or not. '''
         return client_id in self.clients
 
     def has_dangling_client(self, client_id):
-        ''' Returns whether the corresponding dangling client exists or not '''
+        ''' Returns whether the corresponding dangling client exists or not. '''
         return client_id in self.dangling_clients
 
     def get_active_client(self, client_id):
-        ''' Returns corresponding active client if exists else None '''
+        ''' Returns corresponding active client if exists else None. '''
         if client_id in self.clients:
             return self.clients[client_id]
         return None
 
     def get_dangling_client(self, client_id):
-        ''' Returns corresponding dangling client if exists else None '''
+        ''' Returns corresponding dangling client if exists else None. '''
         if client_id in self.dangling_clients:
             return self.dangling_clients[client_id]
         return None
 
     def has_client(self, client_id):
-        ''' Returns True if client_id is in clients or dangling_clients '''
+        ''' Returns True if client_id is in clients or dangling_clients. '''
         return client_id in self.clients or client_id in self.dangling_clients
 
     def get_dangling_clients(self):
@@ -103,7 +113,7 @@ class GameManager(object):
         players = {}
         for client in self.clients.values():
             client_players = client.get_players()
-            players = dict(players, **client_players)
+            players = JSONUtils.merge(players, client_players)
         return players
 
     def get_game(self):
@@ -138,6 +148,40 @@ class GameManager(object):
         	'players': [p.serialize() for p in client.get_players().values()]
 		}
 
+    def get_player_config_error(self):
+        ''' Validate player teams and roles. '''
+        teams = {}
+        red_roles = {}
+        blue_roles = {}
+        
+        for player in self.get_players().values():
+            teams[player.team] = teams.get(player.team, 0) + 1
+
+            if player.team == PlayerTeam.RED:
+                red_roles[player.role] = red_roles.get(player.role, 0) + 1
+            elif player.team == PlayerTeam.BLUE:
+                blue_roles[player.role] = blue_roles.get(player.role, 0) + 1
+        
+        # validate that there are two teams
+        if PlayerTeam.RED not in teams: 
+            return PlayerConfigError.NO_RED_TEAM.value
+        if PlayerTeam.BLUE not in teams:
+            return PlayerConfigError.NO_BLUE_TEAM.value
+
+        # validate that each team has a spymaster
+        if PlayerRole.SPYMASTER not in red_roles: 
+            return PlayerConfigError.NO_RED_SPYMASTER.value
+        if PlayerRole.SPYMASTER not in blue_roles: 
+            return PlayerConfigError.NO_BLUE_SPYMASTER.value
+
+        # validate that each team has at least one operative
+        if PlayerRole.OPERATIVE not in red_roles:
+            return PlayerConfigError.NO_RED_OPERATIVE.value
+        if PlayerRole.OPERATIVE not in blue_roles:
+            return PlayerConfigError.NO_BLUE_OPERATIVE.value
+
+        return PlayerConfigError.NONE.value
+
     def serialize_game(self):
         ''' Serializes contained game to JSON object along with game code. '''
         game_bundle = self.game.serialize()
@@ -148,7 +192,8 @@ class GameManager(object):
         ''' Serializes players to JSON object. '''
         players = self.get_players()
         return {
-            'players': [p.serialize() for p in players.values()]
+            'players': [p.serialize() for p in players.values()],
+            'errorMessage': self.get_player_config_error()
         }
 
     def serialize_players_mapping(self):

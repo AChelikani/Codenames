@@ -24,6 +24,7 @@ td { padding-right: 1em; }
 <div v-cloak id="lobby">
   <center>
     <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
+    <p class="log-error">{{ errorMessage }}</p>
     <table class="primary">
       <thead>
         <tr>
@@ -67,7 +68,10 @@ td { padding-right: 1em; }
       </tbody>
     </table>
     <button v-on:click="addPlayer">Add player</button>
-    <button class="warning" v-on:click="startGame">Start Game</button>
+    <button v-on:click="startGame" v-bind:class="{
+      success: errorMessage === '',
+      warning: errorMessage !== '',
+    }">Start Game</button>
     <div class="log-container">
       <transition-group name="list" tag="p">
         <p v-for="event in log" v-bind:key="event.msg" v-bind:class="{
@@ -136,12 +140,12 @@ td { padding-right: 1em; }
   var Lobby = new Vue({
     el: '#lobby',
     data: {
-      avatarUri: avatarUri,
+      avataruri: avatarUri,
+      errorMessage: '',
       gameCode: gameCode,
-      players: players,
-      myplayers: [],
       log: log,
-      avataruri: avatarUri
+      myplayers: [],
+      players: players
     },
     methods: {
       contains: function(id) {
@@ -166,7 +170,10 @@ td { padding-right: 1em; }
         socket.emit(EVENT_SWITCH_ROLE, playerId);
       },
       startGame: function(event) {
-        socket.emit(EVENT_INIT_START_GAME);
+        // disable the start game button if there's an error
+        if (errorMessage === '') {
+          socket.emit(EVENT_INIT_START_GAME);
+        }
       }
     }
   });
@@ -196,6 +203,9 @@ td { padding-right: 1em; }
     data.players.forEach(function(player) {
       players.push(player);
     });
+
+    // store the error message
+    Lobby.errorMessage = data.errorMessage;
   });
 
   socket.on(EVENT_START_GAME, function(data) {

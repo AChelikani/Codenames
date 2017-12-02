@@ -10,7 +10,7 @@ class JSONUtils:
 			If key-conflict exists, error is thrown.
 		'''
 		new_json = deepcopy(a)
-		return JSONUtils.mix_in_place(new_json, b)
+		return JSONUtils.merge_in_place(new_json, b)
 
 	@staticmethod
 	def merge_in_place(a, b):

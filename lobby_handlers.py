@@ -172,8 +172,6 @@ def player_start_game():
         emit('error', str(err))
         return
 
-    # TODO: Add validation for number of different roles/num players on each team, etc.
-
     game_code = GameCode(game_code_raw)
     emit(LobbyEvent.START_GAME.value, url_for('game.game_data', game_code=game_code), room=game_code, broadcast=True)
 
