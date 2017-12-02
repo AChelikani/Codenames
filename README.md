@@ -2,11 +2,16 @@
 The board game, Codenames, but online!
 
 ## Dev setup
-Clone this repo.
+Clone this repo and ensure you have pip3 and virtualenv installed.
 
-Install `virtualenv` with `pip install virtualenv`.
-
-Go to your parent directory and run `virtualenv Codenames`
+```bash
+$ git clone https://github.com/AChelikani/Codenames.git
+$ pip3 --version
+> pip 9.0.1 from /usr/lib/python3.6/site-packages (python 3.6) # (or similar)
+$ virtualenv --version
+> 15.1.0 # (or similar)
+$ ./setup.sh
+```
 
 Now every time you want to work on the project, go to your project directory and run `source bin/activate`.
 
