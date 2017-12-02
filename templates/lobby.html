@@ -25,12 +25,8 @@ td { padding-right: 1em; }
 <div v-cloak id="lobby">
   <center>
     <p>Share the game code <b>{{ gameCode }}</b> with your friends</p>
-<<<<<<< HEAD
     <p class="log-error">{{ errorMessage }}</p>
-    <table class="primary">
-=======
     <table class="primary lobby-table">
->>>>>>> Lobby delete UI tweaks
       <thead>
         <tr>
           <th></th><th></th><th>Team</th><th>Role</th><th></th>
@@ -45,21 +41,41 @@ td { padding-right: 1em; }
             <avatar :role="player.role" :team="player.team" />
           </td>
           <td>
-            <select v-if="contains(player.id)" class="table-content" style="width: 150px" v-on:change="switchTeam(player.id)" v-bind:value="player.team">
+            <select v-if="contains(player.id)"
+              class="table-content"
+              style="width: 150px"
+              v-on:change="switchTeam(player.id)"
+              v-bind:value="player.team"
+            >
               <option>Red</option>
               <option>Blue</option>
             </select>
-            <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.team">
+            <select v-else
+              class="table-content"
+              style="width: 150px"
+              disabled
+              v-bind:value="player.team"
+            >
               <option>Red</option>
               <option>Blue</option>
             </select>
           </td>
           <td>
-            <select v-if="contains(player.id)" class="table-content" style="width: 150px" v-on:change="switchRole(player.id)" v-bind:value="player.role">
+            <select v-if="contains(player.id)"
+              class="table-content"
+              style="width: 150px"
+              v-on:change="switchRole(player.id)"
+              v-bind:value="player.role"
+            >
               <option>Spymaster</option>
               <option>Operative</option>
             </select>
-            <select v-else class="table-content" style="width: 150px" disabled v-bind:value="player.role">
+            <select v-else
+              class="table-content"
+              style="width: 150px"
+              disabled
+              v-bind:value="player.role"
+            >
               <option>Spymaster</option>
               <option>Operative</option>
             </select>
@@ -110,41 +126,24 @@ td { padding-right: 1em; }
 <script src="{{ url_for('static', filename='js/util.js') }}"></script>
 <script type="text/javascript" charset="utf-8">
   var COOKIE_ID = 'CN_ID';
-  var EVENT_SWITCH_ROLE = {{ LobbyEvent.SWITCH_ROLE.value|tojson|safe }};
-  var EVENT_SWITCH_TEAM = {{ LobbyEvent.SWITCH_TEAM.value|tojson|safe }};
-  var EVENT_CONNECT = {{ LobbyEvent.CONNECT.value|tojson|safe }};
-  var EVENT_UPDATE = {{ LobbyEvent.UPDATE.value|tojson|safe }};
-  var EVENT_SET_ID = {{ LobbyEvent.SET_ID.value|tojson|safe }};
-  var EVENT_START_GAME = {{ LobbyEvent.START_GAME.value|tojson|safe }};
-  var EVENT_INIT_START_GAME = {{ LobbyEvent.INIT_START_GAME.value|tojson|safe }};
-  var EVENT_ADD_PLAYER = {{ LobbyEvent.ADD_PLAYER.value|tojson|safe }};
-  var EVENT_DELETE_PLAYER = {{ LobbyEvent.DELETE_PLAYER.value|tojson|safe }};
-  var EVENT_RECEIVE_PLAYERS = {{ LobbyEvent.RECEIVE_PLAYERS.value|tojson|safe }};
+  var EVENT_SWITCH_ROLE = {{ ClientEvent.SWITCH_ROLE.value|tojson|safe }};
+  var EVENT_SWITCH_TEAM = {{ ClientEvent.SWITCH_TEAM.value|tojson|safe }};
+  var EVENT_CONNECT = {{ ClientEvent.CONNECT.value|tojson|safe }};
+  var EVENT_UPDATE = {{ ClientEvent.UPDATE.value|tojson|safe }};
+  var EVENT_SET_ID = {{ ClientEvent.SET_ID.value|tojson|safe }};
+  var EVENT_START_GAME = {{ ClientEvent.START_GAME.value|tojson|safe }};
+  var EVENT_INIT_START_GAME = {{ ClientEvent.INIT_START_GAME.value|tojson|safe }};
+  var EVENT_ADD_PLAYER = {{ ClientEvent.ADD_PLAYER.value|tojson|safe }};
+  var EVENT_DELETE_PLAYER = {{ ClientEvent.DELETE_PLAYER.value|tojson|safe }};
+  var EVENT_RECEIVE_PLAYERS = {{ ClientEvent.RECEIVE_PLAYERS.value|tojson|safe }};
 
   var avatarUri = {{ url_for('static', filename='img/avatar/')|tojson|safe }};
   var gameCode = {{ game_code|tojson|safe }};
-  var players = [];
-  var log = [];
   var deviceIcon = getDeviceIcon(navigator.userAgent);
 
   // Connect to the socket server
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
   var socket = io.connect(serverUri);
-
-  Vue.component('team', {
-    template: '#team-template',
-    props: {
-      players: Array,
-      color: String,
-      playerid: String,
-      avataruri: String
-    },
-    methods: {
-      onChange: function(playerId) {
-        socket.emit(EVENT_SWITCH_ROLE, playerId);
-      }
-    }
-  });
 
   var Lobby = new Vue({
     el: '#lobby',
@@ -152,41 +151,41 @@ td { padding-right: 1em; }
       avataruri: avatarUri,
       errorMessage: '',
       gameCode: gameCode,
-      log: log,
-      myplayers: [],
-      players: players
+      log: [],
+      clientPlayers: [],
+      players: []
     },
     methods: {
+      addPlayer: function() {
+        socket.emit(EVENT_ADD_PLAYER);
+      },
       contains: function(id) {
         var contains = false;
-        this.myplayers.forEach(function(player) {
+        this.clientPlayers.forEach(function(player) {
           if (player.id === id) {
             contains = true;
           }
         });
         return contains;
       },
-      addPlayer: function() {
-        socket.emit(EVENT_ADD_PLAYER);
-      },
       deletePlayer: function(playerId) {
-        this.myplayers.forEach(function(player) {
+        this.clientPlayers.forEach(function(player) {
           if (player.id === playerId) {
             socket.emit(EVENT_DELETE_PLAYER, playerId);
           }
         });
       },
-      switchTeam: function(playerId) {
-        socket.emit(EVENT_SWITCH_TEAM, playerId);
+      startGame: function(event) {
+        // disable the start game button if there's an error
+        if (this.errorMessage === '') {
+          socket.emit(EVENT_INIT_START_GAME);
+        }
       },
       switchRole: function(playerId) {
         socket.emit(EVENT_SWITCH_ROLE, playerId);
       },
-      startGame: function(event) {
-        // disable the start game button if there's an error
-        if (errorMessage === '') {
-          socket.emit(EVENT_INIT_START_GAME);
-        }
+      switchTeam: function(playerId) {
+        socket.emit(EVENT_SWITCH_TEAM, playerId);
       }
     }
   });
@@ -199,23 +198,17 @@ td { padding-right: 1em; }
 
   socket.on(EVENT_SET_ID, function(cookie) {
     Cookies.set(COOKIE_ID, cookie);
-    Lobby.myplayers = cookie.players;
+    Lobby.clientPlayers = cookie.players;
   });
 
   socket.on(EVENT_RECEIVE_PLAYERS, function(cookie) {
     Cookies.set(COOKIE_ID, cookie);
-    Lobby.myplayers = cookie.players;
+    Lobby.clientPlayers = cookie.players;
   });
 
   // Handles initialization of lobby data
   socket.on(EVENT_UPDATE, function(data) {
-    // clear the players list
-    players.splice(0, players.length);
-
-    // add in the new state
-    data.players.forEach(function(player) {
-      players.push(player);
-    });
+    Lobby.players = data.players;
 
     // store the error message
     Lobby.errorMessage = data.errorMessage;
@@ -226,12 +219,12 @@ td { padding-right: 1em; }
   });
 
   function logMsg(type, msg) {
-    log.push({
+    Lobby.log.push({
       type: type,
       msg: msg
     });
     setTimeout(function() {
-      log.shift();
+      Lobby.log.shift();
     }, 10000);
   }
 

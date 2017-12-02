@@ -1,5 +1,18 @@
 from copy import deepcopy
 from constants import GAME_CODE_KEY, CLIENT_ID_KEY
+from flask_socketio import emit
+from functools import partial
+
+
+class EmitEvent(object):
+	def __init__(self, *args, **kwargs):
+		self.args = args
+		self.kwargs = kwargs
+		self.emit_event = partial(emit, *args, **kwargs)
+
+	def emit(self):
+		self.emit_event()
+
 
 
 class JSONUtils:

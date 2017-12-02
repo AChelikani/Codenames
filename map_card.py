@@ -1,5 +1,6 @@
 from codename_card import CardStatus
 from config import global_config as config
+from player import PlayerTeam
 import random
 
 # Each map card has 1 bomb, 7 neutral, 8 lagging color, 9 starting color
@@ -10,7 +11,7 @@ class MapCard(object):
         programatically represented as a 1D array.
     '''
     def __init__(self):
-        self.starting_color = random.choice([CardStatus.RED, CardStatus.BLUE])
+        self.starting_color = random.choice([PlayerTeam.RED, PlayerTeam.BLUE])
         self.map = self._gen_map_card()
         self.bomb_location = self.map.index(CardStatus.BOMB)
 

@@ -3,6 +3,7 @@ from codename_card import *
 from map_card import *
 from word_source import WordsInMemory
 from copy import deepcopy
+from turn_manager import TurnManager
 
 class CodenameGame(object):
     ''' CodenameGame contains a representation of the game board, as players
@@ -26,6 +27,8 @@ class CodenameGame(object):
         self.activity_log = ActivityLog()
         # Mutable buffer for building activity log entries.
         self.log_entry_builder = LogEntryBuilder()
+        # Create a new turn manager with the starting color
+        # self.turn_manager = TurnManager(self.current_turn)
 
     # Generate a new deck of cards, chosing a set of cards randomly from the set
     # of all cards.
@@ -90,6 +93,9 @@ class CodenameGame(object):
         self.current_turn = CardStatus.RED if self.current_turn == CardStatus.BLUE else CardStatus.BLUE
         self.set_current_clue(word, number)
 
+    def get_current_turn(self):
+        raise NotImplementedError('')
+
     def is_game_over(self):
         ''' Check if the game is over by checking the counts of red and blue
             and checking if the bomb was clicked. Game over condition is that
@@ -123,7 +129,7 @@ class CodenameGame(object):
             "redCount": self.red_count,
             "blueCount": self.blue_count,
             "currentClue": Clue.serialize_clue(self.current_clue),
-            "currentTurn": self.current_turn.name,
+            "currentTurn": self.get_current_turn(),
             "activityLog": self.activity_log.serialize()
         }
 

@@ -1,6 +1,6 @@
 from game_code import *
 from game_manager import GameManager
-from codename_player import PlayerRole
+from player import PlayerRole
 from config import global_config as config
 from utils import JSONUtils
 
@@ -101,13 +101,5 @@ class ActiveGameStore:
 	def get_all_active_games(self):
 		''' Returns in-memory list of all active game codes. '''
 		return [game_code.serialize() for game_code in self.active_games.keys()]
-
-	def get_lobby_bundle(self, game_code):
-		''' Gets JSON "lobby bundle" of all active players in game. '''
-		game_manager = self.get_game(game_code)
-		lobby_bundle = game_manager.serialize_players()
-		# JSONUtils.merge_in_place(lobby_bundle, '')
-		return lobby_bundle
-
 
 game_store = ActiveGameStore()

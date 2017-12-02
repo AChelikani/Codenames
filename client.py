@@ -2,7 +2,7 @@ from config import global_config as config
 from enum import Enum
 from random import choice
 from uuid import uuid4
-from codename_player import Player, PlayerRole, PlayerTeam
+from player import Player, PlayerRole, PlayerTeam
 
 class Client(object):
     def __init__(self, client_id):
@@ -54,6 +54,12 @@ class Client(object):
         player = self.players[player_id]
         player.team = PlayerTeam.BLUE if player.team == PlayerTeam.RED else PlayerTeam.RED
         return
+
+    def get_cookie(self):
+        return {
+            'client_id': self.id,
+        	'players': [p.serialize() for p in self.get_players().values()]
+		}
 
     def switch_player_role(self, player_id):
         ''' Switches player role (OPERATIVE/SPYMASTER). '''
