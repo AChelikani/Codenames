@@ -1,17 +1,16 @@
 from client_manager import ClientEvent
-from constants import GAME_CODE_KEY, CLIENT_ID_KEY, OLD_ID_KEY
+from constants import GAME_CODE_KEY, CLIENT_ID_KEY
 from enum import Enum
 from error_handling import ErrorHandler
 from flask import Blueprint, render_template, abort, session, request, redirect, url_for
 from flask_socketio import emit, join_room, leave_room
-from game_code import GameCode, generate_unique_game_code
+from game_code import GameCode
 from game_store import game_store
 from utils import get_session_data
 from __main__ import socketio
 
 
 lobby = Blueprint('lobby', __name__, template_folder='templates')
-
 
 
 @lobby.route('/l/<game_code>')
@@ -28,7 +27,6 @@ def game_lobby(game_code):
         )
     else:
         abort(404)
-
 
 @lobby.route('/add_to_lobby/', methods=['POST'])
 def add_to_lobby():
@@ -56,16 +54,14 @@ def client_event_handler(client_event, data=None, skip_client_id=False):
 
     game_manager = game_store.get_game(game_code)
 
-    #try:
-    client, events = game_manager.handle_client_event(client_id, client_event, data)
-    #except Exception as e:
-        #emit('error', str(e))
+    try:
+        client, events = game_manager.handle_client_event(client_id, client_event, data)
+    except Exception as e:
+        emit('error', str(e))
 
     for event in events:
         event.emit()
     return client
-
-
 
 @socketio.on(ClientEvent.CONNECT.value)
 def client_connect(cookie):
@@ -81,17 +77,17 @@ def client_connect(cookie):
 
     game_manager = game_store.get_game(game_code)
 
-    #try:
-    client, events = game_manager.handle_client_event(
-       client_id=None,
-       client_event=ClientEvent.CONNECT,
-       data=cookie
-    )
-    #except Exception as e:
-    #    emit('error', str(e))
+    try:
+        client, events = game_manager.handle_client_event(
+            client_id=None,
+            client_event=ClientEvent.CONNECT,
+            data=cookie
+        )
+    except Exception as e:
+        emit('error', str(e))
 
-    for event in events:
-        event.emit()
+    for event in events: event.emit()
+
     # Store the client id and game code in the session for further requests
     session[CLIENT_ID_KEY] = client.id
 
@@ -100,7 +96,6 @@ def client_connect(cookie):
 
     # emit an update to the clients
     game_manager.get_lobby_update_event().emit()
-
 
 
 @socketio.on(ClientEvent.ADD_PLAYER.value)
@@ -115,11 +110,9 @@ def delete_player(player_id):
 def player_switch_team(player_id):
     client_event_handler(ClientEvent.SWITCH_TEAM, player_id)
 
-
 @socketio.on(ClientEvent.SWITCH_ROLE.value)
 def player_switch_role(player_id):
     client_event_handler(ClientEvent.SWITCH_ROLE, player_id)
-
 
 @socketio.on(ClientEvent.INIT_START_GAME.value)
 def player_start_game():
@@ -131,7 +124,6 @@ def player_start_game():
 
     game_code = GameCode(game_code_raw)
     emit(ClientEvent.START_GAME.value, url_for('game.game_data', game_code=game_code), room=game_code, broadcast=True)
-
 
 # TODO: this is problematic.
 # Socket.IO sends the same 'disconnect' event for all disconnects, so we cannot

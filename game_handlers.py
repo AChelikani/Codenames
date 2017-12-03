@@ -6,7 +6,7 @@ from game_store import game_store
 from constants import GAME_CODE_KEY, CLIENT_ID_KEY
 from utils import get_session_data
 from __main__ import socketio
-from codename_card import CardStatus
+from card import CardStatus
 
 game = Blueprint('game', __name__, template_folder='templates')
 
@@ -17,7 +17,6 @@ class GameEvent(Enum):
     CHOOSE_WORD = 'choose_word'
 
 
-# TODO this whole route
 @game.route('/g/<game_code>')
 def game_data(game_code):
     game_code_obj = GameCode(game_code)
@@ -25,7 +24,10 @@ def game_data(game_code):
         # TODO error handling
         return render_template('rejoin.html')
     game_manager = game_store.get_game(game_code_obj)
+    game = game_manager.get_game()
+    current_turn = game.get_current_turn()
 
+    '''
     if CLIENT_ID_KEY not in session:
         return render_template('rejoin.html')
 
@@ -41,11 +43,11 @@ def game_data(game_code):
 
     # TODO figure out which player's turn it is
     player = list(client.get_players().values())[0]
+    '''
+
     return render_template(
        'game.html',
-       game_bundle=game_store.get_full_game_bundle(game_code_obj, player.role),
-       player_role=player.role.value,
-       board_size=config.getNumCards(),
+       game_bundle=game_store.get_full_game_bundle(game_code_obj, current_turn),
        GameEvent=GameEvent,
    )
 

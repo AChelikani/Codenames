@@ -11,6 +11,7 @@ class PlayerRole(Enum):
     SPYMASTER = 'Spymaster'
     OPERATIVE = 'Operative'
 
+
 class Player(object):
 
 	# TODO: Move sampling logic to Player static constructor,

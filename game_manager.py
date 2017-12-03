@@ -1,10 +1,23 @@
 from client_manager import ClientManager, ClientEvent
-from codename_game import CodenameGame
+from game import CodenameGame
+from enum import Enum
 from transitions import Machine
 from utils import JSONUtils, EmitEvent
 
 
+class GameState(Enum):
+    IN_LOBBY = 0
+    IN_GAME  = 1
+    IN_ENDSCREEN = 2
+
 class GameManager(object):
+    states = [ GameState.IN_LOBBY, GameState.IN_GAME, GameState.IN_ENDSCREEN ]
+
+    transitions = [
+        ['start_game', GameState.IN_LOBBY, GameState.IN_GAME],
+        ['pause_game', GameState.IN_GAME, GameState.IN_LOBBY],
+        ['game_over', GameState.IN_GAME, GameState.IN_ENDSCREEN],
+    ]
 
     def __init__(self, game_code):
         # Game code of game being managed.
@@ -13,6 +26,14 @@ class GameManager(object):
         self.game = CodenameGame()
         # Manager for clients (and players)
         self.client_manager = ClientManager()
+        # Manager for displaying the right data to a client
+        # self.display_manager = DisplayManager()
+        self.machine = Machine(
+            model=self,
+            states=GameManager.states,
+            initial=GameState.IN_LOBBY,
+            transitions=GameManager.transitions,
+        )
 
     def get_lobby_update_event(self):
         ''' Constructs a client UPDATE event based upon the current state. '''
@@ -45,15 +66,8 @@ class GameManager(object):
 
     def serialize_players(self):
         ''' Serializes players to JSON object. '''
-        players = self.get_players()
-        return {
-            'players': [p.serialize() for p in players.values()],
-            'errorMessage': self.get_player_config_error()
-        }
+        return self.client_manager.serialize_players()
 
     def serialize_players_mapping(self):
         ''' Serializes playerid to player mapping to JSON object. '''
-        players = self.get_players()
-        return {
-            'players_mapping': [{'playerId': pId, 'player': p.serialize()} for pId, p in players.items()]
-        }
+        return self.client_manager.serialize_players_mapping()

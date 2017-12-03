@@ -1,4 +1,4 @@
-from codename_card import CardStatus
+from card import CardStatus
 from config import global_config as config
 from player import PlayerTeam
 import random
@@ -64,7 +64,7 @@ class MapCard(object):
     def serialize(self):
         ''' Serialize the data in the MapCard '''
         return {
-            "starting_color": self.starting_color.name,
+            "starting_color": self.starting_color.value,
             "map": [str(status.name) for status in self.map],
             "bomb_location": self.bomb_location
         }

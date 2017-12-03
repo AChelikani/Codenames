@@ -1,7 +1,8 @@
+from config import global_config as config
+from game import CodenameGame
 from game_code import *
 from game_manager import GameManager
 from player import PlayerRole
-from config import global_config as config
 from utils import JSONUtils
 
 
@@ -103,3 +104,9 @@ class ActiveGameStore:
 		return [game_code.serialize() for game_code in self.active_games.keys()]
 
 game_store = ActiveGameStore()
+
+# TODO: if debug:
+
+test_game = CodenameGame()
+game_store.create_game(GameCode('test'))
+#game_store.active_games[GameCode('test')] = test_game

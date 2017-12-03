@@ -183,7 +183,7 @@ class ClientManager(object):
         players = {}
         for client in self.clients.values():
             client_players = client.get_players()
-            players = JSONUtils.merge(players, client_players)
+            players = dict(players, **client_players)
         return players
 
     def client_has_player(self, client_id, player_id):
@@ -246,4 +246,18 @@ class ClientManager(object):
         return {
             'players': [p.serialize() for p in players.values()],
             'errorMessage': self.get_player_config_error()
+        }
+    def serialize_players(self):
+        ''' Serializes players to JSON object. '''
+        players = self.get_players()
+        return {
+            'players': [p.serialize() for p in players.values()],
+            'errorMessage': self.get_player_config_error()
+        }
+
+    def serialize_players_mapping(self):
+        ''' Serializes playerid to player mapping to JSON object. '''
+        players = self.get_players()
+        return {
+            'players_mapping': [{'playerId': pId, 'player': p.serialize()} for pId, p in players.items()]
         }

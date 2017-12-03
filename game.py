@@ -1,14 +1,17 @@
+from card import Card, CardStatus
 from config import global_config as config
-from codename_card import *
-from map_card import *
-from word_source import WordsInMemory
 from copy import deepcopy
+from map_card import *
+from player import PlayerTeam
+from transitions import Machine
 from turn_manager import TurnManager
+from word_source import WordsInMemory
 
 class CodenameGame(object):
     ''' CodenameGame contains a representation of the game board, as players
         see it.
     '''
+
     def __init__(self):
         # An array of Card objects. The elements composing the deck do not ever change
         #   although the elements themselves are mutated as the game progresses.
@@ -20,7 +23,7 @@ class CodenameGame(object):
         # Number of 'found' blue cards (Mutable).
         self.blue_count = 0
         # Current turn (RED/BLUE) as a CardStatus (Mutable).
-        self.current_turn = self.map_card.get_starting_color()
+        self.starting_team = self.map_card.get_starting_color()
         # Current turn clue (Mutable).
         self.current_clue = None
         # Log of each turn's clue, guesses, and results (Mutable).
@@ -28,7 +31,7 @@ class CodenameGame(object):
         # Mutable buffer for building activity log entries.
         self.log_entry_builder = LogEntryBuilder()
         # Create a new turn manager with the starting color
-        # self.turn_manager = TurnManager(self.current_turn)
+        self.turn_manager = TurnManager(self.starting_team)
 
     # Generate a new deck of cards, chosing a set of cards randomly from the set
     # of all cards.
@@ -94,7 +97,7 @@ class CodenameGame(object):
         self.set_current_clue(word, number)
 
     def get_current_turn(self):
-        raise NotImplementedError('')
+        return PlayerTeam.RED
 
     def is_game_over(self):
         ''' Check if the game is over by checking the counts of red and blue
@@ -112,7 +115,7 @@ class CodenameGame(object):
             # If game is over, update activity log, since no switch-turn will be called.
             self.log_entry_builder.track_clue(self.side)
             self.log_entry_builder.track_clue(self.clue)
-            self.activity_log.addEntry(self.log_entry_builder.build(self.side, self.clue))
+            self.activity_log.add_entry(self.log_entry_builder.build(self.side, self.clue))
             return True
 
         return False
@@ -124,12 +127,14 @@ class CodenameGame(object):
         for card in self.deck:
             card_statuses.append(card.get_status())
         serialized_deck = [card.serialize() for card in self.deck]
+        team, role = self.turn_manager.get_current_turn_team_role()
         return {
             "deck" : serialized_deck,
             "redCount": self.red_count,
             "blueCount": self.blue_count,
             "currentClue": Clue.serialize_clue(self.current_clue),
-            "currentTurn": self.get_current_turn(),
+            "currentTeam": team.value,
+            "currentRole": role.value,
             "activityLog": self.activity_log.serialize()
         }
 
@@ -156,7 +161,7 @@ class ActivityLog:
     def __init__(self, log = []):
         self.log = []
 
-    def addEntry(self, entry):
+    def add_entry(self, entry):
         ''' Appends new entry to end of list.'''
         self.log.append(entry)
 

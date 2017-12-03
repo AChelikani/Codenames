@@ -7,8 +7,8 @@
 {% block content %}
 {% raw %}
 <div v-cloak id="app">
-  <h2>{{ playerRole }}</h2>
-  <board :data="deck" :size="boardSize"></board>
+  <p>Current turn: {{ gameBundle.currentTeam }} {{ gameBundle.currentRole }}</p>
+  <board :data="gameBundle.deck" :size="boardSize"></board>
   <br/><br/>
   <board :data="map" :size="boardSize"></board>
   <br></br>
@@ -47,11 +47,9 @@
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
   var socket = io.connect(serverUri);
 
-  var playerRole = {{ player_role|tojson|safe }};
-  var boardSize = {{ board_size|tojson|safe }};
   var gameBundle = {{ game_bundle|tojson|safe }};
-  var map = [];
 
+  var map = [];
   if (gameBundle.map) {
     map = gameBundle.deck.map(function(pos, i) {
       return {
@@ -87,9 +85,8 @@
   var App = new Vue({
     el: '#app',
     data: {
-      playerRole: playerRole,
-      boardSize: boardSize,
-      deck: gameBundle.deck,
+      boardSize: Number(gameBundle.boardSize),
+      gameBundle: gameBundle,
       map: map
     },
     methods: {
