@@ -49,7 +49,7 @@ def client_event_handler(client_event, data=None, skip_client_id=False):
 
     game_code = GameCode(game_code_raw)
     if not game_store.contains_game(game_code):
-        ErrorHandler.game_code_dne(ClientEvent.SWITCH_TEAM, game_code)
+        ErrorHandler.game_code_dne(ClientEvent.UPDATE, game_code)
         return
 
     game_manager = game_store.get_game(game_code)
@@ -100,7 +100,7 @@ def client_connect(cookie):
 
 @socketio.on(ClientEvent.ADD_PLAYER.value)
 def add_player():
-    client = client_event_handler(ClientEvent.ADD_PLAYER)
+    client_event_handler(ClientEvent.ADD_PLAYER)
 
 @socketio.on(ClientEvent.DELETE_PLAYER.value)
 def delete_player(player_id):

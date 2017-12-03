@@ -34,6 +34,21 @@ class ClientManager(object):
     states = [
         'valid', 'invalid'
     ]
+
+    operative_errors = [PlayerConfigError.NO_RED_OPERATIVE, PlayerConfigError.NO_BLUE_OPERATIVE]
+
+    red_team_errors = [
+        PlayerConfigError.NO_RED_TEAM,
+        PlayerConfigError.NO_RED_SPYMASTER,
+        PlayerConfigError.NO_RED_OPERATIVE
+    ]
+
+    blue_team_errors = [
+        PlayerConfigError.NO_BLUE_TEAM,
+        PlayerConfigError.NO_BLUE_SPYMASTER,
+        PlayerConfigError.NO_BLUE_OPERATIVE
+    ]
+
     def __init__(self):
         # Player client mapping (maybe not necessary)
         self.player_clients = {}
@@ -60,7 +75,7 @@ class ClientManager(object):
             cookie = client.get_cookie()
             events.append(EmitEvent(ClientEvent.SET_ID.value, cookie))
         elif client_event is ClientEvent.ADD_PLAYER:
-            player = self.add_new_player(client_id)
+            self.add_new_player(client_id)
         elif client_event is ClientEvent.DELETE_PLAYER:
             player_id = data
             if not self.client_has_player(client_id, player_id):
@@ -115,8 +130,20 @@ class ClientManager(object):
         return client
 
     def add_new_player(self, client_id):
+        ''' Add a player that fixes the player config error if one exists,
+            otherwise add a random player.
+        '''
         client = self.get_client(client_id)
-        new_player = client.add_new_player(self.used_avatars)
+        error = PlayerConfigError(self.get_player_config_error())
+        new_role = PlayerRole.OPERATIVE if error in self.operative_errors else PlayerRole.SPYMASTER
+
+        if error in self.red_team_errors:
+            new_player = client.add_new_player(self.used_avatars, PlayerTeam.RED, new_role)
+        elif error in self.blue_team_errors:
+            new_player = client.add_new_player(self.used_avatars, PlayerTeam.BLUE, new_role)
+        else:
+            new_player = client.add_new_player(self.used_avatars)
+
         self.used_avatars.append(new_player.avatar)
         return new_player
 

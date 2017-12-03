@@ -24,10 +24,10 @@ class Player(object):
     	self.avatar = avatar
 
     @classmethod
-    def new_player(cls, used_avatars):
+    def new_player(cls, used_avatars, team=None, role=None):
         return cls(id=str(uuid4()),
-                   team=choice(list(PlayerTeam)),
-                   role=choice(list(PlayerRole)),
+                   team=team if team is not None else choice(list(PlayerTeam)),
+                   role=role if role is not None else choice(list(PlayerRole)),
                    avatar=Player._get_avatar(used_avatars))
 
     @staticmethod

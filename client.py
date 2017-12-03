@@ -17,9 +17,9 @@ class Client(object):
         ''' Returns number of players. '''
         return len(self.players)
 
-    def add_new_player(self, used_avatars):
+    def add_new_player(self, used_avatars, team=None, role=None):
         ''' Creates new player and adds it. '''
-        new_player = Player.new_player(used_avatars)
+        new_player = Player.new_player(used_avatars, team, role)
         self.add_player(new_player)
         return new_player
 
