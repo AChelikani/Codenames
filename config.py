@@ -11,6 +11,7 @@ class Configuration:
         self.GAME_CODE_LEN = dict.get("GAME_CODE_LEN", DefaultConfiguration.GAME_CODE_LEN)
         self.WORDS_FILE = dict.get("WORDS_FILE", DefaultConfiguration.WORDS_FILE)
         self.AVATARS = dict.get("AVATARS", DefaultConfiguration.AVATARS)
+        self.CLEAN_UP_DELTA = dict.get("CLEAN_UP_DELTA", DefaultConfiguration.CLEAN_UP_DELTA)
 
     @classmethod
     def fileConfiguration(cls):
@@ -76,6 +77,6 @@ class DefaultConfiguration:
     NUM_BLUES = 8
     WORDS_FILE = "resources/words.txt"
     GAME_CODE_LEN = 5
-    AVATARS_FILE = "resources/avatars.txt"
     AVATARS = []
+    CLEAN_UP_DELTA = 600
 global_config = Configuration.factory("file")

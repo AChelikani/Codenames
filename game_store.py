@@ -2,7 +2,9 @@ from config import global_config as config
 from game import CodenameGame
 from game_code import *
 from game_manager import GameManager
+import logging
 from player import PlayerRole
+import time, threading
 from utils import JSONUtils
 
 
@@ -19,6 +21,13 @@ class ActiveGameStore:
 		'''
 		game_code = self.create_game_code() if game_code_option is None else game_code_option
 		self.update_game(game_code, GameManager(game_code))
+
+        # Initiate a timer to kill off this game if doesn't have any clients
+        # after config.CLEAN_UP_DELTA seconds
+		# TODO: this is pretty hacky and bad because it will destroy a game
+		# 	    no matter how active it has been, if it has no clients after
+		#       CLEAN_UP_DELTA seconds.
+		threading.Timer(config.CLEAN_UP_DELTA, lambda: self.watch(game_code)).start()
 		return game_code
 
 	def create_game_code(self):
@@ -41,23 +50,23 @@ class ActiveGameStore:
 		''' Overrides stored game at given game code with new provided game. '''
 		self.active_games[game_code] = new_game
 
-	def remove_client(self, client_id, game_code):
-		''' Removes client from corresponding game manager. '''
-		game_manager = self.get_game(game_code)
-		client = game_manager.remove_client(client_id)
-		return client
-
-	def add_new_client(self, game_code):
-		''' Adds client to specified game. '''
-		game_manager = self.get_game(game_code)
-		new_client = game_manager.add_new_client()
-		return new_client
-
 	def get_game(self, game_code):
 		''' Returns specified game by game code.'''
 		if game_code not in self.active_games:
 			raise ValueError("%s not found in game store" % str(game_code))
 		return self.active_games[game_code]
+
+	def watch(self, game_code):
+		''' Meant to be called every config.CLEAN_UP_DELTA seconds to check if
+			a game has no clients and delete it if that is the case.
+	    '''
+		logging.info('[CLEAN UP] Checking game %s for clients', str(game_code))
+		game_manager = self.get_game(game_code)
+		if game_manager.get_num_clients() == 0:
+			logging.info('[CLEAN UP] KILLING game %s', str(game_code))
+			self.remove_game(game_code)
+		else:
+			threading.Timer(config.CLEAN_UP_DELTA, lambda: self.watch(game_code)).start()
 
 	def get_game_bundle(self, game_code):
 		'''	Returns JSON bundle of all dynamic game information

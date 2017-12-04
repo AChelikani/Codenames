@@ -72,7 +72,6 @@ class GameManager(object):
             broadcast=True
         )
 
-
     def handle_game_event(self, client_id, game_event, data):
         events = []
         game = self.game
@@ -91,9 +90,11 @@ class GameManager(object):
             # TODO validate clue
             game.set_current_clue(clue['word'], int(clue['number']))
 
-
         events.append(self.get_game_update_event())
         return game, events
+
+    def get_num_clients(self):
+        return self.client_manager.get_num_clients()
 
     def serialize_game(self):
         ''' Serializes contained game to JSON object along with game code. '''

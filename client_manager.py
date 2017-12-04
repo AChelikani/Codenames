@@ -279,6 +279,7 @@ class ClientManager(object):
 
         return PlayerConfigError.NONE.value
 
+
     def get_lobby_bundle(self):
         ''' Serializes players to JSON object. '''
         players = self.get_players()
@@ -286,6 +287,7 @@ class ClientManager(object):
             'players': [p.serialize() for p in players.values()],
             'errorMessage': self.get_player_config_error()
         }
+
     def serialize_players(self):
         ''' Serializes players to JSON object. '''
         players = self.get_players()

@@ -30,5 +30,6 @@
 		"squirrel",
 		"wolf",
 		"zebra"
-	]
+	],
+	"CLEAN_UP_DELTA": 600
 }
