@@ -40,7 +40,7 @@ def add_to_lobby():
 
 ###  Socket listeners ###
 
-def client_event_handler(client_event, data=None, skip_client_id=False):
+def client_event_handler(client_event, data=None):
     try:
         game_code_raw, client_id = get_session_data(session)
     except ValueError as err:
@@ -54,13 +54,13 @@ def client_event_handler(client_event, data=None, skip_client_id=False):
 
     game_manager = game_store.get_game(game_code)
 
-    try:
-        client, events = game_manager.handle_client_event(client_id, client_event, data)
-    except Exception as e:
-        emit('error', str(e))
+    #try:
+    client, events = game_manager.handle_client_event(client_id, client_event, data)
+    #except Exception as e:
+    #    emit('error', str(e))
 
     for event in events:
-        event.emit()
+        event.emit(game_code)
     return client
 
 @socketio.on(ClientEvent.CONNECT.value)
@@ -86,7 +86,7 @@ def client_connect(cookie):
     except Exception as e:
         emit('error', str(e))
 
-    for event in events: event.emit()
+    for event in events: event.emit(game_code)
 
     # Store the client id and game code in the session for further requests
     session[CLIENT_ID_KEY] = client.id
@@ -95,7 +95,7 @@ def client_connect(cookie):
     join_room(game_code)
 
     # emit an update to the clients
-    game_manager.get_lobby_update_event().emit()
+    game_manager.get_lobby_update_event().emit(game_code)
 
 
 @socketio.on(ClientEvent.ADD_PLAYER.value)
@@ -116,14 +116,12 @@ def player_switch_role(player_id):
 
 @socketio.on(ClientEvent.INIT_START_GAME.value)
 def player_start_game():
-    try:
-        game_code_raw, client_id = get_session_data(session)
-    except ValueError as err:
-        emit('error', str(err))
+    if GAME_CODE_KEY not in session:
+        # TODO: error handling
         return
-
-    game_code = GameCode(game_code_raw)
-    emit(ClientEvent.START_GAME.value, url_for('game.game_data', game_code=game_code), room=game_code, broadcast=True)
+    game_code = session[GAME_CODE_KEY]
+    redirect_url = url_for('game.game_data', game_code=game_code)
+    client_event_handler(ClientEvent.INIT_START_GAME, redirect_url)
 
 # TODO: this is problematic.
 # Socket.IO sends the same 'disconnect' event for all disconnects, so we cannot

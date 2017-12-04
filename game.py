@@ -1,11 +1,22 @@
 from card import Card, CardStatus
 from config import global_config as config
 from copy import deepcopy
+from enum import Enum
 from map_card import *
 from player import PlayerTeam
 from transitions import Machine
 from turn_manager import TurnManager
 from word_source import WordsInMemory
+
+
+class GameEvent(Enum):
+    TURN = 'game_turn'
+    STOP = 'game_stop'
+    PAUSE = 'game_pause'
+    CHOOSE_WORD = 'choose_word'
+    SUBMIT_CLUE = 'submit_clue'
+    UPDATE = 'game_update'
+
 
 class CodenameGame(object):
     ''' CodenameGame contains a representation of the game board, as players
@@ -45,6 +56,9 @@ class CodenameGame(object):
             position += 1
         return cards
 
+    def handle_game_event(self):
+        pass
+
     def mark_card(self, ind, new_status):
         ''' Mark a card as either red or blue, based on the passed in status. '''
         assert(0 <= ind < len(deck))
@@ -62,6 +76,7 @@ class CodenameGame(object):
         assert(int(number) == number), "Not a valid number"
 
         self.current_clue = Clue(word, number)
+        self.turn_manager.next_turn()
 
     # Makes a guess, and returns boolean based on correctness of guess
     def make_guess(self, word):
@@ -76,17 +91,19 @@ class CodenameGame(object):
         if (not card):
             raise Exception("Invalid word")
 
+        team, role = self.get_current_turn()
         position_type = self.map_card.get_card_type_at_position(card.get_position())
         self.log_entry_builder.track_guess(Card(word, position_type))
-        if (self.current_turn == position_type):
+        if (team.name == position_type.name):
             card.set_status(position_type)
             self.current_clue.number -= 1
-            return (True, position_type)
         else:
             # Incorrect guess ends the turn
             card.set_status(position_type)
             self.current_clue.number = 0
-            return (False, position_type)
+
+        if self.current_clue.number == 0:
+            self.turn_manager.next_turn()
 
     def switch_turns(self, word, number):
         ''' Swtich active turn to the other team '''
@@ -97,7 +114,7 @@ class CodenameGame(object):
         self.set_current_clue(word, number)
 
     def get_current_turn(self):
-        return PlayerTeam.RED
+        return self.turn_manager.get_current_turn_team_role()
 
     def is_game_over(self):
         ''' Check if the game is over by checking the counts of red and blue
@@ -127,7 +144,7 @@ class CodenameGame(object):
         for card in self.deck:
             card_statuses.append(card.get_status())
         serialized_deck = [card.serialize() for card in self.deck]
-        team, role = self.turn_manager.get_current_turn_team_role()
+        team, role = self.get_current_turn()
         return {
             "deck" : serialized_deck,
             "redCount": self.red_count,
@@ -240,8 +257,8 @@ class Clue:
     def serialize(self):
         ''' Serializes all clue field values to JSON. '''
         return {
-            "word": word if word is not None else "",
-            "number": str(number) if number is None else ""
+            "word": self.word if self.word is not None else "",
+            "number": str(self.number) if self.number is not None else ""
         }
 
     @staticmethod

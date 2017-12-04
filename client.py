@@ -47,6 +47,13 @@ class Client(object):
         ''' Returns True if player_id is in players '''
         return player_id in self.players
 
+    def has_role(self, team, role):
+        ''' Returns whether or not a player with the given role exists '''
+        for player in players:
+            if player.role is role and player.team is team:
+                return True
+        return False
+
     def switch_player_team(self, player_id):
         ''' Switches player team (RED/BLUE). '''
         if player_id not in self.players:
@@ -58,7 +65,7 @@ class Client(object):
     def get_cookie(self):
         return {
             'client_id': self.id,
-        	'players': [p.serialize() for p in self.get_players().values()]
+            'players': [p.id for p in self.get_players().values()]
 		}
 
     def switch_player_role(self, player_id):

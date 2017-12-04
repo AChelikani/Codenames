@@ -34,6 +34,7 @@ class TurnManager(object):
         self.machine = Machine(
             model=self,
             states=TurnManager.states,
+            transitions=TurnManager.transitions,
             initial=TurnManager.create_state(starting_team, starting_role)
         )
 

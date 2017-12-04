@@ -58,6 +58,8 @@ class ClientManager(object):
         self.dangling_clients = {}
         # Avatars being used for clients.
         self.used_avatars = []
+        # Allow new players to join or not
+        self.locked = False
 
     def handle_event(self, client_id, client_event, data):
         ''' Handles all client events given a client id, the event and data
@@ -70,8 +72,11 @@ class ClientManager(object):
                 self.has_client(data[CLIENT_ID_KEY])):
                 existing_id = data[CLIENT_ID_KEY]
                 client = self.restore_client(existing_id)
-            else:
+            elif not self.locked:
                 client = self.add_new_client()
+            else:
+                raise PermissionError("""Lobby is locked, no new players are
+                                         permitted to join.""")
             cookie = client.get_cookie()
             events.append(EmitEvent(ClientEvent.SET_ID.value, cookie))
         elif client_event is ClientEvent.ADD_PLAYER:
@@ -97,6 +102,10 @@ class ClientManager(object):
                                          change player %s"""
                                          % (client_id, player_id))
             self.switch_player_role(client_id, player_id)
+        elif client_event is ClientEvent.INIT_START_GAME:
+            self.locked = True
+            redirect_url = data
+            events.append(EmitEvent(ClientEvent.START_GAME.value, redirect_url, broadcast=True))
         elif client_event is ClientEvent.DISCONNECT:
             self.remove_client(client_id)
 
@@ -109,7 +118,6 @@ class ClientManager(object):
             events.append(EmitEvent(ClientEvent.RECEIVE_PLAYERS.value, cookie))
 
         return client, events
-
 
     def get_client(self, client_id):
         ''' Returns an active client if it exists. '''
@@ -232,6 +240,10 @@ class ClientManager(object):
         player = client.remove_player(player_id)
         self.used_avatars.remove(player.avatar)
         return
+
+    def client_has_role(self, client_id, team, role):
+        client = self.get_client(client_id)
+        return client.has_role(team, role)
 
     def get_player_config_error(self):
         ''' Validate player teams and roles. '''

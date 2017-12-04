@@ -162,7 +162,7 @@ td { padding-right: 1em; }
       contains: function(id) {
         var contains = false;
         this.clientPlayers.forEach(function(player) {
-          if (player.id === id) {
+          if (player === id) {
             contains = true;
           }
         });
@@ -170,7 +170,7 @@ td { padding-right: 1em; }
       },
       deletePlayer: function(playerId) {
         this.clientPlayers.forEach(function(player) {
-          if (player.id === playerId) {
+          if (player === playerId) {
             socket.emit(EVENT_DELETE_PLAYER, playerId);
           }
         });

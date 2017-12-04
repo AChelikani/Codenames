@@ -1,5 +1,6 @@
 from copy import deepcopy
 from constants import GAME_CODE_KEY, CLIENT_ID_KEY
+from flask import session
 from flask_socketio import emit
 from functools import partial
 
@@ -8,10 +9,10 @@ class EmitEvent(object):
 	def __init__(self, *args, **kwargs):
 		self.args = args
 		self.kwargs = kwargs
-		self.emit_event = partial(emit, *args, **kwargs)
 
-	def emit(self):
-		self.emit_event()
+	def emit(self, game_code):
+		emit_event = partial(emit, *self.args, **self.kwargs, room=game_code)
+		emit_event()
 
 
 
@@ -50,7 +51,6 @@ class JSONUtils:
 			raise ValueError("New child key conflicts with existing key in parent JSON object. Objects cannot be composed. ")
 		parent[new_child_key] = new_child
 		return parent
-
 
 # Given a session return the game_code and player_id from it
 def get_session_data(session):
