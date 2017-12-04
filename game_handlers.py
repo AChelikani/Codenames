@@ -49,7 +49,6 @@ def game_data(game_code):
     game = game_manager.get_game()
     team, role = game.get_current_turn()
 
-    # print(game_store.get_full_game_bundle(game_code_obj, role))
     return render_template(
        'game.html',
        game_bundle=game_store.get_full_game_bundle(game_code_obj, role),
