@@ -297,6 +297,7 @@ class ClientManager(object):
     def serialize_players_mapping(self):
         ''' Serializes playerid to player mapping to JSON object. '''
         players = self.get_players()
+        print(players)
         return {
-            'players_mapping': [{'playerId': pId, 'player': p.serialize()} for pId, p in players.items()]
+            'playersMapping': { pId: p.serialize() for pId, p in players.items() }
         }

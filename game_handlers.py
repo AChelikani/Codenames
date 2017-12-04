@@ -22,26 +22,34 @@ def game_data(game_code):
         # TODO error handling
         return render_template('rejoin.html')
     session[GAME_CODE_KEY] = game_code
-
-
-    if CLIENT_ID_KEY not in session and game_code != 'test':
-        # TODO: check if client id in game, and restore else redirect
-        try:
-            client, events = game_manager.handle_client_event(
-                client_id=None,
-                client_event=ClientEvent.CONNECT,
-                data=cookie
-            )
-            session[CLIENT_ID_KEY] = client_id
-        except PermissionError as e:
-            return render_template('rejoin.html')
-
-    client_id = session[CLIENT_ID_KEY]
-
     game_manager = game_store.get_game(game_code_obj)
+
+    if CLIENT_ID_KEY not in session:
+        # Somehow the client lost their session between the lobby and the game
+        # TODO: handle reconnection
+        return render_template('rejoin.html')
+
+    # TODO: This is emulating a lobby reconnection event using the session data
+    #       I don't think this is a very good way to transition clients from
+    #       the lobby to the game.
+    #       Ideally, we don't even have a separate page, we serve the lobby
+    #       and game on a single page.
+    cookie = {}
+    cookie[CLIENT_ID_KEY] = session[CLIENT_ID_KEY]
+    try:
+        client, events = game_manager.handle_client_event(
+            client_id=None,
+            client_event=ClientEvent.CONNECT,
+            data=cookie
+        )
+        session[CLIENT_ID_KEY] = client.id
+    except PermissionError as e:
+        return render_template('rejoin.html')
+
     game = game_manager.get_game()
     team, role = game.get_current_turn()
 
+    # print(game_store.get_full_game_bundle(game_code_obj, role))
     return render_template(
        'game.html',
        game_bundle=game_store.get_full_game_bundle(game_code_obj, role),
@@ -124,23 +132,13 @@ def player_turn(message):
 def choose_word(word):
     game_event_handler(GameEvent.CHOOSE_WORD, word)
 
-    # Validate that the event comes from the client possessing the player whose
-    # turn it is.
-
-    # Perform game logic with word choice
-
-    # Change player turn
-
-    # Propagate changes to other clients
-
 @socketio.on(GameEvent.SUBMIT_CLUE.value)
 def submit_clue(clue):
     game_event_handler(GameEvent.SUBMIT_CLUE, clue)
 
 @socketio.on('pause game')
 def player_pause_game():
-    pass
-	#raise NotImplementedError("Please Implement this method")
+	raise NotImplementedError("Please Implement this method")
 
 @socketio.on('end game')
 def player_end_game(message):

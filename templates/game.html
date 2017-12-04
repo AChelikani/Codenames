@@ -5,24 +5,76 @@ a {
   color: inherit;
   text-decoration: none;
 }
+#game {
+  margin-left: 2em;
+  margin-right: 2em;
+}
 .clickable {
   cursor: pointer;
+}
+.inactive {
+  opacity: 0.4;
+}
+.clue-label-text {
+  display: inline;
+}
+.clue-text {
+  display: inline;
+  font-weight: bold;
+}
+.spymaster-view {
+  margin-top: 1em;
+}
+.submit-form {
+  margin-top: 1em;
+  justify-content: center;
+}
+.submit {
+  margin: 0px;
 }
 </style>
 {% endblock %}
 {% block content %}
 {% raw %}
 <div v-cloak id="game">
-  <p>Current turn: {{ gameBundle.currentTeam }} {{ gameBundle.currentRole }}</p>
-  <p>Current clue: {{ gameBundle.currentClue.word }}, {{ gameBundle.currentClue.number}}</p>
-  <board :data="gameBundle.deck" :enablewords="gameBundle.currentRole === 'Operative'" :size="boardSize"></board>
-  <br></br>
-  <div v-if="gameBundle.currentRole === 'Spymaster'">
-    <board :data="map" :size="boardSize"></board>
-    <br/><br/>
-    <input type="text" v-model="clueword" placeholder="Enter clue word here"> </input>
-    <input type="text" v-model="cluenumber" placeholder="Enter number of guesses here"> </input>
-    <button v-on:click="submitClue"> Submit </button>
+  <div class="flex two center" style="justify-content: center">
+    <div>
+      <span>
+        <avatar :role="gameBundle.currentRole" :team="gameBundle.currentTeam" />
+      </span>
+    </div>
+    <div>
+      <span>
+        <p class="clue-label-text">Clue:</p>
+        <p class="clue-text">
+          {{ gameBundle.currentClue.word }}, {{ gameBundle.currentClue.number}}
+        </p>
+      </span>
+    </div>
+  </div>
+  <div v-bind:class="{ inactive: !isActive }">
+    <board :data="gameBundle.deck" :enablewords="wordsEnabled" :size="boardSize"></board>
+    <div class="spymaster-view" v-if="gameBundle.currentRole === 'Spymaster'">
+      <board :data="map" :size="boardSize"></board>
+      <div class="submit-form flex two three-500 center">
+          <div>
+            <input type="text" v-model="clueword" placeholder="Clue">
+          </div>
+          <div style="width: 70px">
+            <input type="number" v-model="cluenumber" min="1" max="8" placeholder="-">
+          </div>
+          <div style="width: 95px">
+            <button
+              class="submit"
+              :disabled="!isActive ? true : false"
+              v-bind:class="{ warning: !canSubmit(), success: canSubmit() }"
+              v-on:click="submitClue"
+            >
+              Submit
+            </button>
+          </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endraw %}
@@ -30,28 +82,25 @@ a {
 {% block scripts %}
 {% raw %}
 <script type="text/x-template" id="board-template">
-  <table>
-    <thead></thead>
-    <tbody>
-      <tr v-for="row in boardData">
-        <td v-for="col in row">
-          <span v-bind:class="{
+  <div class="flex two three-500 four-700 five-900">
+    <template v-for="row in boardData">
+      <div v-for="col in row">
+        <span v-bind:class="{
             red: col.status === 'RED',
             blue: col.status === 'BLUE',
             neutral: col.status === 'NEUTRAL',
             bomb: col.status === 'BOMB',
-          }">
-            <a v-if="enablewords" v-on:click="chooseWord(col.word)" class="clickable">
-              {{col.word}}
-            </a>
-            <a v-else class="unclickable">
-              {{col.word}}
-            </a>
-          </span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+        }">
+          <a v-if="enablewords" v-on:click="chooseWord(col.word)" class="clickable">
+            {{col.word}}
+          </a>
+          <a v-else class="unclickable">
+            {{col.word}}
+          </a>
+        </span>
+      </div>
+    </template>
+  </div>
 </script>
 {% endraw %}
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
@@ -65,7 +114,10 @@ a {
   var serverUri = location.protocol+'//'+document.domain+':'+location.port;
   var socket = io.connect(serverUri);
 
+  var cookie = Cookies.getJSON(COOKIE_ID);
+  var clientPlayers = cookie.players;
   var gameBundle = {{ game_bundle|tojson|safe }};
+  var playersMapping = gameBundle.playersMapping;
 
   var map = [];
   if (gameBundle.map) {
@@ -105,19 +157,50 @@ a {
     el: '#game',
     data: {
       boardSize: Number(gameBundle.boardSize),
+      clientPlayers: clientPlayers,
+      cluenumber: '',
+      clueword: '',
       gameBundle: gameBundle,
       map: map,
-      clueword: '',
-      cluenumber: '',
+      playersMapping: playersMapping
+    },
+    computed: {
+      isActive: function() {
+        var gameBundle = this.gameBundle;
+        var players_mapping = this.playersMapping;
+        var currentTeam = gameBundle.currentTeam;
+        var currentRole = gameBundle.currentRole;
+        var isActive = false;
+        this.clientPlayers.forEach(function(playerId) {
+          var player = players_mapping[playerId];
+          if (player.id === playerId &&
+            player.role === currentRole &&
+            player.team === currentTeam) {
+              isActive = true;
+            }
+          });
+        return isActive;
+      },
+      wordsEnabled: function() {
+        return this.isActive && this.gameBundle.currentRole === 'Operative';
+      }
     },
     methods: {
+      validClue: function() {
+        return this.clueword !== '' && this.cluenumber !== '';
+      },
+      canSubmit: function() {
+        return this.isActive && this.validClue();
+      },
       submitClue: function() {
-        socket.emit(EVENT_SUBMIT_CLUE, {
-          word: this.clueword,
-          number: this.cluenumber
-        });
-        this.clueword = '';
-        this.cluenumber = '';
+        if (this.canSubmit()) {
+          socket.emit(EVENT_SUBMIT_CLUE, {
+            word: this.clueword,
+            number: this.cluenumber
+          });
+          this.clueword = '';
+          this.cluenumber = '';
+        }
       }
     }
   });
