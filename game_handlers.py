@@ -66,7 +66,7 @@ def game_event_handler(game_event, data=None):
 
     #try:
     game, events = game_manager.handle_game_event(client_id, game_event, data)
-    for event in events: event.emit(game_code)
+    for event in events: event.emit()
     return game
     #except Exception as e:
     #

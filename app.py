@@ -34,6 +34,7 @@ app.register_blueprint(create)
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 logging.getLogger('socketio').setLevel(logging.WARNING)
 logging.getLogger('engineio').setLevel(logging.WARNING)
+logging.getLogger('transitions').setLevel(logging.WARNING)
 
 
 # Home page for game creation and game joining

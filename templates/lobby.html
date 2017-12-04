@@ -190,6 +190,8 @@ td { padding-right: 1em; }
     }
   });
 
+  console.log(Cookies.getJSON('CN_ID'));
+
   // Handles the initial connection of the player
   socket.on('connect', function() {
     var cookie = Cookies.getJSON(COOKIE_ID);
@@ -197,11 +199,13 @@ td { padding-right: 1em; }
   });
 
   socket.on(EVENT_SET_ID, function(cookie) {
+    console.log('SETID');
     Cookies.set(COOKIE_ID, cookie);
     Lobby.clientPlayers = cookie.players;
   });
 
   socket.on(EVENT_RECEIVE_PLAYERS, function(cookie) {
+    console.log('RECV PALYERs');
     Cookies.set(COOKIE_ID, cookie);
     Lobby.clientPlayers = cookie.players;
   });

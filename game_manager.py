@@ -45,6 +45,7 @@ class GameManager(object):
         return EmitEvent(
             ClientEvent.UPDATE.value,
             lobby_bundle,
+            room=self.game_code,
             broadcast=True
         )
 
@@ -53,7 +54,7 @@ class GameManager(object):
             appends an UPDATE event.
         '''
         client_manager = self.client_manager
-        client, events = client_manager.handle_event(client_id, client_event, data)
+        client, events = client_manager.handle_event(self.game_code, client_id, client_event, data)
         events.append(self.get_lobby_update_event())
         return client, events
 
@@ -67,6 +68,7 @@ class GameManager(object):
         return EmitEvent(
             GameEvent.UPDATE.value,
             game_bundle,
+            room=self.game_code,
             broadcast=True
         )
 

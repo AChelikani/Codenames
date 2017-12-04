@@ -61,7 +61,7 @@ class ClientManager(object):
         # Allow new players to join or not
         self.locked = False
 
-    def handle_event(self, client_id, client_event, data):
+    def handle_event(self, game_code, client_id, client_event, data):
         ''' Handles all client events given a client id, the event and data
             associated with the event.
          '''
@@ -105,7 +105,7 @@ class ClientManager(object):
         elif client_event is ClientEvent.INIT_START_GAME:
             self.locked = True
             redirect_url = data
-            events.append(EmitEvent(ClientEvent.START_GAME.value, redirect_url, broadcast=True))
+            events.append(EmitEvent(ClientEvent.START_GAME.value, redirect_url, room=game_code, broadcast=True))
         elif client_event is ClientEvent.DISCONNECT:
             self.remove_client(client_id)
 

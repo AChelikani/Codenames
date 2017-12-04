@@ -9,10 +9,10 @@ class EmitEvent(object):
 	def __init__(self, *args, **kwargs):
 		self.args = args
 		self.kwargs = kwargs
+		self.emit_event = partial(emit, *self.args, **self.kwargs)
 
-	def emit(self, game_code):
-		emit_event = partial(emit, *self.args, **self.kwargs, room=game_code)
-		emit_event()
+	def emit(self):
+		self.emit_event()
 
 
 

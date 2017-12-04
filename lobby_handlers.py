@@ -60,7 +60,7 @@ def client_event_handler(client_event, data=None):
     #    emit('error', str(e))
 
     for event in events:
-        event.emit(game_code)
+        event.emit()
     return client
 
 @socketio.on(ClientEvent.CONNECT.value)
@@ -77,16 +77,16 @@ def client_connect(cookie):
 
     game_manager = game_store.get_game(game_code)
 
-    try:
-        client, events = game_manager.handle_client_event(
-            client_id=None,
-            client_event=ClientEvent.CONNECT,
-            data=cookie
-        )
-    except Exception as e:
-        emit('error', str(e))
+    #try
+    client, events = game_manager.handle_client_event(
+        client_id=None,
+        client_event=ClientEvent.CONNECT,
+        data=cookie
+    )
+    #except Exception as e:
+    #    emit('error', str(e))
 
-    for event in events: event.emit(game_code)
+    for event in events: event.emit()
 
     # Store the client id and game code in the session for further requests
     session[CLIENT_ID_KEY] = client.id
@@ -95,7 +95,7 @@ def client_connect(cookie):
     join_room(game_code)
 
     # emit an update to the clients
-    game_manager.get_lobby_update_event().emit(game_code)
+    game_manager.get_lobby_update_event().emit()
 
 
 @socketio.on(ClientEvent.ADD_PLAYER.value)
