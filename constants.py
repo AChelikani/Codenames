@@ -1,10 +1,10 @@
 
 
-COLOUR_BLUE_1 = ''
-COLOUR_RED_1 = ''
-COLOUR_PURPLE_1 = ''
-COLOUR_NEUTRAL_1 = ''
-COLOUR_BOMB_1 = ''
+COLOR_BLUE_1 = ''
+COLOR_RED_1 = ''
+COLOR_PURPLE_1 = ''
+COLOR_NEUTRAL_1 = ''
+COLOR_BOMB_1 = ''
 
 
 # Used to store/load game_code to/from session
