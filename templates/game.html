@@ -46,9 +46,16 @@ a {
     <div>
       <span>
         <p class="clue-label-text">Clue:</p>
-        <p class="clue-text">
-          {{ gameBundle.currentClue.word }}, {{ gameBundle.currentClue.number}}
-        </p>
+        <div v-if="gameBundle.currentClue.word != ''">
+            <p class="clue-text">
+                {{ gameBundle.currentClue.word }}, {{ gameBundle.currentClue.number}}
+            </p>
+        </div>
+        <div v-else>
+            <p class="clue-text">
+                Waiting for spymaster ...
+            </p>
+        </div>
       </span>
     </div>
   </div>
