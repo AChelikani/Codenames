@@ -194,7 +194,9 @@ a {
     },
     methods: {
       validClue: function() {
-        return this.clueword !== '' && this.cluenumber !== '';
+         var nonEmpty = this.clueword !== '' && this.cluenumber !== '';
+         var oneWord = this.clueword.indexOf(' ') < 0;
+         return nonEmpty && oneWord;
       },
       canSubmit: function() {
         return this.isActive && this.validClue();
