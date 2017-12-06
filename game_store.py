@@ -27,7 +27,8 @@ class ActiveGameStore:
 		# TODO: this is pretty hacky and bad because it will destroy a game
 		# 	    no matter how active it has been, if it has no clients after
 		#       CLEAN_UP_DELTA seconds.
-		threading.Timer(config.CLEAN_UP_DELTA, lambda: self.watch(game_code)).start()
+		if not __debug__:
+			threading.Timer(config.CLEAN_UP_DELTA, lambda: self.watch(game_code)).start()
 		return game_code
 
 	def create_game_code(self):
