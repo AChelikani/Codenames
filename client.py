@@ -49,10 +49,19 @@ class Client(object):
 
     def has_role(self, team, role):
         ''' Returns whether or not a player with the given role exists '''
-        for player in players:
+        for player in self.players.values():
             if player.role is role and player.team is team:
                 return True
         return False
+
+    def has_spymaster(self):
+        ''' Returns SPYMASTER if there exists a player with the role of
+            spymaster.
+        '''
+        for player in self.players.values():
+            if player.role is PlayerRole.SPYMASTER:
+                return PlayerRole.SPYMASTER
+        return PlayerRole.OPERATIVE
 
     def switch_player_team(self, player_id):
         ''' Switches player team (RED/BLUE). '''

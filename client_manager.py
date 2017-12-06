@@ -245,6 +245,7 @@ class ClientManager(object):
         client = self.get_client(client_id)
         return client.has_role(team, role)
 
+
     def get_player_config_error(self):
         ''' Validate player teams and roles. '''
         teams = {}
@@ -278,7 +279,6 @@ class ClientManager(object):
             return PlayerConfigError.NO_BLUE_OPERATIVE.value
 
         return PlayerConfigError.NONE.value
-
 
     def get_lobby_bundle(self):
         ''' Serializes players to JSON object. '''
