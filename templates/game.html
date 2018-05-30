@@ -50,6 +50,9 @@ a {
             <p class="clue-text">
                 {{ gameBundle.currentClue.word }}, {{ gameBundle.currentClue.number}}
             </p>
+            <p v-if="gameBundle.guessesLeft > 0">
+                {{ gameBundle.guessesLeft }} guess{{ gameBundle.guessesLeft === 1 ? '' : 'es' }} left this turn
+            </p>
         </div>
         <div v-else>
             <p class="clue-text">
