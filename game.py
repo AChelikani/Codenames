@@ -37,6 +37,8 @@ class CodenameGame(object):
         self.starting_team = self.map_card.get_starting_color()
         # Current turn clue (Mutable).
         self.current_clue = None
+        # Number of guesses left for the team whose turn it is to guess (Mutable).
+        self.guesses_left = 0
         # Log of each turn's clue, guesses, and results (Mutable).
         self.activity_log = ActivityLog()
         # Mutable buffer for building activity log entries.
@@ -76,6 +78,7 @@ class CodenameGame(object):
         assert(int(number) == number), "Not a valid number"
 
         self.current_clue = Clue(word, number)
+        self.guesses_left = number + 1
         self.turn_manager.next_turn()
 
     # Makes a guess, and returns boolean based on correctness of guess
@@ -84,7 +87,7 @@ class CodenameGame(object):
         if (self.current_clue is None):
             raise Exception("No clue given")
 
-        if (self.current_clue.number == 0):
+        if (self.guesses_left == 0):
             raise Exception("No more guesses left!")
 
         card = self.get_card_by_word(word)
@@ -96,13 +99,13 @@ class CodenameGame(object):
         self.log_entry_builder.track_guess(Card(word, position_type))
         if (team.name == position_type.name):
             card.set_status(position_type)
-            self.current_clue.number -= 1
+            self.guesses_left -= 1
         else:
             # Incorrect guess ends the turn
             card.set_status(position_type)
-            self.current_clue.number = 0
+            self.guesses_left = 0
 
-        if self.current_clue.number == 0:
+        if self.guesses_left == 0:
             self.turn_manager.next_turn()
 
     def switch_turns(self, word, number):
@@ -150,6 +153,7 @@ class CodenameGame(object):
             "redCount": self.red_count,
             "blueCount": self.blue_count,
             "currentClue": Clue.serialize_clue(self.current_clue),
+            "guessesLeft": self.guesses_left,
             "currentTeam": team.value,
             "currentRole": role.value,
             "activityLog": self.activity_log.serialize()
