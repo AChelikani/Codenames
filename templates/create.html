@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
+{% block head %}
+<style>
+  #game_code_copy {
+    padding: 0.2em 0.6em;
+  }
+</style>
+{% endblock %}
 {% block content %}
-<div>
+<div id="create">
   <center>
     <h1>New Game!</h1>
     <p>
@@ -8,8 +15,33 @@
       <a href="{{ url_for('lobby.game_lobby', game_code=game_code) }}">
         <b> {{ game_code }} </b>
       </a>
+      <button id="game_code_copy"
+        data-clipboard-text="{{ game_code }}"
+        v-bind:class="{
+          success: copied
+        }"
+        v-on:blur="copied = false">
+        <span v-if="copied">Copied!</span>
+        <span v-else>Copy</span>
+      </button>
        to your friends to get started!
     </p>
   </center>
 </div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/clipboard.min.js') }}"></script>
+<script type="text/javascript" charset="utf-8">
+  var Create = new Vue({
+    el: '#create',
+    data: {
+      copied: false,
+    },
+  });
+
+  var clipboard = new ClipboardJS('#game_code_copy');
+  clipboard.on('success', function(e) {
+    Create.copied = true;
+  });
+</script>
 {% endblock %}
